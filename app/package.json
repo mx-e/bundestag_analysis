@@ -10,7 +10,9 @@
     "d3": "^6.1.1",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
+    "react-motion": "^0.5.2",
     "react-scripts": "3.4.3",
+    "react-transition-group": "^4.4.1",
     "seedrandom": "^3.0.5",
     "webgl": "^0.0.7"
   },

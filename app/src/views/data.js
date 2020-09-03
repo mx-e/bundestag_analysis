@@ -4,28 +4,39 @@ import {
   requestMPData,
   requestVoteData,
 } from "../middleware/requests";
-import TsnePlot from "./tsne-plot";
+import { TSNESolver } from "../components/tsne-solver/tsne-solver";
 
 const dispatchError = (err) => {
   console.log(err);
 };
 
-const filterMPs = (mps, optsState) =>
-  Object.keys(mps).filter((mp) =>
-    mps[mp].elecPeriod.includes(optsState.elecPeriod)
-  );
+const filterMPs = (mps, optsState) => {
+  let out = {};
+  Object.keys(mps)
+    .filter((mp) => mps[mp].elecPeriod.includes(optsState.elecPeriod))
+    .forEach((key) => {
+      out[key] = mps[key];
+    });
+  return out;
+};
 
-const filterVotes = (votes, optsState) =>
-  Object.keys(votes).filter(
-    (vote) => votes[vote].elecPeriod === optsState.elecPeriod
-  );
+const filterVotes = (votes, optsState) => {
+  let out = {};
+  Object.keys(votes)
+    .filter((vote) => votes[vote].elecPeriod === optsState.elecPeriod)
+    .forEach((key) => {
+      out[key] = votes[key];
+    });
+  return out;
+};
 
 export const OptsActions = {};
 
 const initialOpts = {
-  elecPeriod: 1,
+  elecPeriod: 16,
+  maxIter: 2000,
   tsne: {
-    epsilon: 5,
+    epsilon: 8,
     perplexity: 12,
     dim: 2,
   },
@@ -57,57 +68,23 @@ export const DataView = () => {
     [optsState.elecPeriod]
   );
 
+  const filteredMps = filterMPs(mps, optsState);
+  const filteredVotes = filterVotes(votes, optsState);
+
   if (
-    Object.keys(mps).length > 0 &&
-    Object.keys(votes).length > 0 &&
+    Object.keys(filteredMps).length > 0 &&
+    Object.keys(filteredVotes).length > 0 &&
     votingData[optsState.elecPeriod]
   ) {
     return (
       <div>
-        <TSNE_Solver opts={optsState} data={[votingData, mps, votes]} />
+        <TSNESolver
+          opts={optsState}
+          data={[votingData, filteredMps, filteredVotes]}
+        />
       </div>
     );
   } else {
     return <div>WAITING FOR DATA...</div>;
   }
-};
-
-const computeTsneMatrix = (mps, votes, votingData, opts) => {
-  const filteredMPsKeys = filterMPs(mps, opts);
-  const filteredVotesKeys = filterVotes(votes, opts);
-  return filteredMPsKeys.map((mp) =>
-    filteredVotesKeys.map((vote) => {
-      const hasCastVote = votingData[opts.elecPeriod].mps[mp].find(
-        (vb) => vb[0] + "" === vote
-      );
-      return hasCastVote ? hasCastVote[1] : 0;
-    })
-  );
-};
-
-export const TSNE_Solver = (props) => {
-  const dimensions = [500, 300];
-  const {
-    opts,
-    data: [votingData, mpData, votesData],
-  } = props;
-  const [tsnePlot, setTsnePlot] = useState(null);
-  const tsnePlotNode = useRef(null);
-  const tsneData = useMemo(
-    () => computeTsneMatrix(mpData, votesData, votingData, opts),
-    [votingData, mpData, votesData, opts]
-  );
-  useEffect(() => {
-    setTsnePlot(new TsnePlot(dimensions, tsneData, tsnePlotNode, opts.tsne));
-  }, [tsneData]);
-
-  useEffect(() => {
-    if (tsnePlot) {
-      console.log("runs");
-
-      tsnePlot.run(1000);
-    }
-  }, [tsnePlot]);
-
-  return <div ref={tsnePlotNode}>SCATTERPLOT</div>;
 };
