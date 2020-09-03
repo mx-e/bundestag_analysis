@@ -1,10 +1,10 @@
-import React, { useEffect, useMemo, useReducer, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import {
   requestElecPeriodData,
   requestMPData,
   requestVoteData,
 } from "../middleware/requests";
-import { tsnejs } from "../tsne/tsne";
+import TsnePlot from "./tsne-plot";
 
 const dispatchError = (err) => {
   console.log(err);
@@ -24,10 +24,9 @@ export const OptsActions = {};
 
 const initialOpts = {
   elecPeriod: 1,
-  maxIter: 150,
   tsne: {
-    epsilon: 10,
-    perplexity: 15,
+    epsilon: 5,
+    perplexity: 12,
     dim: 2,
   },
 };
@@ -87,34 +86,28 @@ const computeTsneMatrix = (mps, votes, votingData, opts) => {
 };
 
 export const TSNE_Solver = (props) => {
+  const dimensions = [500, 300];
   const {
     opts,
     data: [votingData, mpData, votesData],
   } = props;
-  const [tsneSolver, setTsneSolver] = useState(null);
-  const [step, setStep] = useState(0);
+  const [tsnePlot, setTsnePlot] = useState(null);
+  const tsnePlotNode = useRef(null);
   const tsneData = useMemo(
     () => computeTsneMatrix(mpData, votesData, votingData, opts),
     [votingData, mpData, votesData, opts]
   );
   useEffect(() => {
-    setStep(0);
-    setTsneSolver(new tsnejs.tSNE(opts.tsne));
-  }, [opts]);
-
-  useEffect(() => {
-    if (tsneSolver) {
-      tsneSolver.initDataRaw(tsneData);
-    }
+    setTsnePlot(new TsnePlot(dimensions, tsneData, tsnePlotNode, opts.tsne));
   }, [tsneData]);
 
-  const { maxIter } = opts;
   useEffect(() => {
-    if (step < maxIter && tsneSolver) {
-      tsneSolver.step();
-      setStep(step + 1);
-      console.log(step);
+    if (tsnePlot) {
+      console.log("runs");
+
+      tsnePlot.run(1000);
     }
-  });
-  return <div>SCATTERPLOT</div>;
+  }, [tsnePlot]);
+
+  return <div ref={tsnePlotNode}>SCATTERPLOT</div>;
 };
