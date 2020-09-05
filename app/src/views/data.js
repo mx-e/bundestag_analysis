@@ -11,27 +11,8 @@ import {
 import { requestElecPeriodData, errorDispatch } from "../middleware/requests";
 import { TSNESolver } from "../components/tsne-solver/tsne-solver";
 import { useWindowSize } from "../util/util";
+import { ColorOverlay, Filter } from "./data-filters";
 import style from "./data.module.css";
-
-const filterMPs = (mps, optsState) => {
-  let out = {};
-  Object.keys(mps)
-    .filter((mp) => mps[mp].elecPeriod.includes(optsState.elecPeriod))
-    .forEach((key) => {
-      out[key] = mps[key];
-    });
-  return out;
-};
-
-const filterVotes = (votes, optsState) => {
-  let out = {};
-  Object.keys(votes)
-    .filter((vote) => votes[vote].elecPeriod === optsState.elecPeriod)
-    .forEach((key) => {
-      out[key] = votes[key];
-    });
-  return out;
-};
 
 export const ComputationStates = Object.freeze({
   RUNNING: "RUNNING",
@@ -51,19 +32,23 @@ export const DisplayModes = Object.freeze({
 });
 export const Overlays = Object.freeze({
   MPS: {
-    PARTY: "PARTY",
+    PARTY: ColorOverlay("party", "party"),
   },
   VOTES: {},
 });
 
 const DEFAULT_ITERATIONS = 1000;
+const DEFAULT_ELEC_PERIOD = 1;
 
-const defaultFilters = { MPS: [], VOTES: [] };
+const defaultFilters = {
+  ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
+  MPS: [],
+  VOTES: [],
+};
 
 const initialOpts = {
   computationState: ComputationStates.RUNNING,
   maxIter: DEFAULT_ITERATIONS,
-  elecPeriod: 1,
   displayMode: DisplayModes.MPS,
   colorOverlay: Overlays.MPS.PARTY,
   filters: defaultFilters,
@@ -108,35 +93,64 @@ const optsReducer = (state, action) => {
   }
 };
 
+const applyElecPeriodFilters = (mps, votes, filter) => [
+  filter.filterFunc(mps),
+  filter.filterFunc(votes),
+];
+
+const applyOtherFilters = (mps, votes, filters) => {
+  let filteredMPs = { ...mps };
+  let filteredVotes = { ...votes };
+  const uniqueVals = { MPS: {}, VOTES: {} };
+  filters.MPS.forEach((filter) => {
+    const { filterFunc, title, uniqueValFunc } = filter;
+    filteredMPs = filterFunc(filteredMPs);
+    uniqueVals.MPS[title] = uniqueValFunc(mps);
+  });
+  filters.VOTES.forEach((filter) => {
+    const { filterFunc, title, uniqueValFunc } = filter;
+    filteredVotes = filterFunc(filteredVotes);
+    uniqueVals.VOTES[title] = uniqueValFunc(votes);
+  });
+  return [filteredMPs, filteredVotes, uniqueVals];
+};
+
+const computeOverlayData = (displayMode, overlay, mps, votes) =>
+  displayMode === DisplayModes.MPS
+    ? [overlay.colorFunc(mps), overlay.uniqueValFunc(mps)]
+    : [overlay.colorFunc(mps), overlay.uniqueValFunc(votes)];
+
 export const DataView = (props) => {
   const { mps, votes } = props;
   const [optsState, optsDispatch] = useReducer(optsReducer, initialOpts);
   const [votingData, setData] = useState({});
 
+  const { displayMode, computationState, filters, colorOverlay } = optsState;
+  const elecPeriod = filters.ELEC_PERIOD.value;
   useEffect(
-    () =>
-      requestElecPeriodData(
-        optsState.elecPeriod,
-        votingData,
-        setData,
-        errorDispatch
-      ),
-    [optsState.elecPeriod]
+    () => requestElecPeriodData(elecPeriod, votingData, setData, errorDispatch),
+    [elecPeriod]
   );
 
   const [windowWidth, windowHeight] = useWindowSize();
   const mainVisHeight = Math.max(windowHeight * 0.5, 500);
   const mainVisWidth = Math.max(windowWidth * 0.7, 420);
-  const filteredMps = useMemo(() => filterMPs(mps, optsState), [
-    optsState.elecPeriod,
-    mps,
-  ]);
-  const filteredVotes = useMemo(() => filterVotes(votes, optsState), [
-    optsState.elecPeriod,
-    votes,
-  ]);
+  const [elecPeriodMPs, elecPeriodVotes] = useMemo(
+    () => applyElecPeriodFilters(mps, votes, filters.ELEC_PERIOD),
+    [filters.ELEC_PERIOD.value]
+  );
+  const [filteredMPs, filteredVotes, uniqueFilterVals] = useMemo(
+    () => applyOtherFilters(elecPeriodMPs, elecPeriodVotes, filters),
+    [elecPeriodMPs, elecPeriodVotes, ...filters.MPS, ...filters.VOTES]
+  );
 
-  if (votingData[optsState.elecPeriod]) {
+  const [overlayColors, overlayVals] = useMemo(
+    () =>
+      computeOverlayData(displayMode, colorOverlay, filteredMPs, filteredVotes),
+    [displayMode, colorOverlay, filteredMPs, filteredVotes]
+  );
+
+  if (votingData[elecPeriod]) {
     return (
       <div className={style.dataViewWrap}>
         <header className={style.header}>
@@ -146,15 +160,16 @@ export const DataView = (props) => {
         <div className={style.mainVis}>
           <TSNESolver
             dims={[mainVisWidth, mainVisHeight]}
+            elecPeriod={elecPeriod}
             opts={optsState}
             optsDispatch={optsDispatch}
-            data={[votingData, filteredMps, filteredVotes]}
+            data={[votingData, filteredMPs, filteredVotes, overlayColors]}
           />
         </div>
         <div className={style.visControls}>
-          <Legend />
+          <Legend colorOverlay={colorOverlay} uniqueVals={overlayVals} />
           <VisControls
-            computationState={optsState.computationState}
+            computationState={computationState}
             optsDispatch={optsDispatch}
           />
           <OverlayControls />

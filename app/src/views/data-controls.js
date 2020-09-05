@@ -2,9 +2,29 @@ import React from "react";
 import Button from "../components/ui/button";
 import { ComputationStates, OptsActions } from "./data";
 import style from "./data-controls.module.css";
+import { Rectangle } from "../components/ui/rectangle";
 
 export const Legend = (props) => {
-  return <h5>legend</h5>;
+  const { colorOverlay, uniqueVals } = props;
+  const width = Math.min(uniqueVals.length * 50, 400);
+  return (
+    <div className={style.legendWrap}>
+      <h5>legend</h5>
+      {uniqueVals && (
+        <div className={style.legendRow} style={{ width: width }}>
+          {uniqueVals.map((val) => (
+            <Rectangle
+              width={35}
+              height={35}
+              key={val}
+              bgColor={colorOverlay.colorFuncSingle(val)}
+              text={val}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 };
 
 export const VisControls = (props) => {
@@ -29,7 +49,11 @@ export const VisControls = (props) => {
 };
 
 export const OverlayControls = (props) => {
-  return <h5>overlay</h5>;
+  return (
+    <div className={style.overlayControlsWrap}>
+      <h5>overlay</h5>
+    </div>
+  );
 };
 
 export const PerplexitySlider = (props) => {

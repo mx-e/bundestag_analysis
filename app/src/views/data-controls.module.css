@@ -3,3 +3,21 @@
     width: 120px;
     justify-content: center;
 }
+
+.legendRow{
+    display: flex;
+    flex-direction: row;
+    justify-content: space-evenly;
+    margin-right: auto;
+    margin-left: auto;
+}
+
+.legendWrap{
+    text-align: center;
+    width: 400px;
+}
+
+.overlayControlsWrap{
+    width:400px;
+    text-align: center;
+}

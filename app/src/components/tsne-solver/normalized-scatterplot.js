@@ -19,7 +19,7 @@ const normalize = (X, margin) => {
 export const NormalizedScatterplot = (props) => {
   const {
     data,
-    metaData,
+    overlayData,
     dims: [width, height],
   } = props;
   const normalizedData = normalize(data, 5);
@@ -43,7 +43,7 @@ export const NormalizedScatterplot = (props) => {
       .attr("r", 3.5)
       .attr("opacity", 0.7)
 
-      .style("fill", (d, i) => metaData[i].color);
+      .style("fill", (d, i) => overlayData[i]);
 
     circles.attr("cx", (d) => x(d[0])).attr("cy", (d) => y(d[1]));
   }, [normalizedData]);

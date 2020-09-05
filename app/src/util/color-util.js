@@ -1,5 +1,3 @@
-import { Overlays } from "../views/data";
-
 const partyColorMap = {
   CDU: "#000000",
   SPD: "#EB001F",
@@ -9,17 +7,7 @@ const partyColorMap = {
   Greens: "#64A12D",
 };
 
-const getPartyColor = (party) =>
+export const getPartyColor = (party) =>
   partyColorMap[party] ? partyColorMap[party] : "#cfcfc2";
 
-const uniformColorScheme = "#cfcfc2";
-
-export const getElemColor = (colorOverlay, value) => {
-  switch (colorOverlay) {
-    case Overlays.MPS.PARTY: {
-      return getPartyColor(value.party);
-    }
-    default:
-      return uniformColorScheme;
-  }
-};
+export const uniformColorScheme = "#cfcfc2";

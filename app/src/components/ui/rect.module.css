@@ -1,4 +1,13 @@
 
 .rectWrap{
-    
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+}
+
+.rectSubtitle{
+    color: #f8f8f2;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 12px;
+    transform: translate();
 }

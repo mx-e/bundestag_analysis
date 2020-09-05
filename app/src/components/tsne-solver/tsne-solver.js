@@ -1,13 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { tsnejs } from "./tsne";
 import { NormalizedScatterplot } from "./normalized-scatterplot";
-import { getElemColor } from "../../util/color-util";
-import {
-  ComputationStates,
-  OptsActions,
-  Overlays,
-  DisplayModes,
-} from "../../views/data";
+import { ComputationStates, OptsActions } from "../../views/data";
 
 const computeTsneMatrix = (mps, votes, votingData, elecPeriod) =>
   Object.keys(mps).map((mp) =>
@@ -19,31 +13,13 @@ const computeTsneMatrix = (mps, votes, votingData, elecPeriod) =>
     })
   );
 
-const computeMetaData = (displayMode, colorOverlay, mps, votes) => {
-  if (displayMode === DisplayModes.MPS) {
-    return Object.values(mps).map((mp) => ({
-      color: getElemColor(colorOverlay, mp),
-    }));
-  } else {
-    return Object.values(votes).map((vote) => ({
-      color: getElemColor(colorOverlay, vote),
-    }));
-  }
-};
-
 export const TSNESolver = (props) => {
   const {
     dims,
-    opts: {
-      elecPeriod,
-      computationState,
-      tsne,
-      maxIter,
-      colorOverlay,
-      displayMode,
-    },
+    elecPeriod,
+    opts: { computationState, tsne, maxIter },
     optsDispatch,
-    data: [votingData, mpData, votesData],
+    data: [votingData, mpData, votesData, overlayData],
   } = props;
   const [tsneInstance, setTsneInstance] = useState(null);
   const [displayData, setDisplayData] = useState([]);
@@ -51,11 +27,6 @@ export const TSNESolver = (props) => {
   const tsneData = useMemo(
     () => computeTsneMatrix(mpData, votesData, votingData, elecPeriod),
     [votingData, mpData, votesData, elecPeriod]
-  );
-
-  const metaData = useMemo(
-    () => computeMetaData(displayMode, colorOverlay, mpData, votesData),
-    [mpData, votesData, colorOverlay, displayMode]
   );
 
   useEffect(() => {
@@ -102,7 +73,7 @@ export const TSNESolver = (props) => {
     <div>
       <NormalizedScatterplot
         data={displayData}
-        metaData={metaData}
+        overlayData={overlayData}
         dims={dims}
       />
     </div>

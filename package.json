@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@blueprintjs/core": "^3.31.0"
+    "@blueprintjs/core": "^3.31.0",
+    "popper": "^1.0.1"
   }
 }
