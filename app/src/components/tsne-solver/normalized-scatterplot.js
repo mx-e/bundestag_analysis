@@ -22,7 +22,7 @@ export const NormalizedScatterplot = (props) => {
     metaData,
     dims: [width, height],
   } = props;
-  const normalizedData = useMemo(() => normalize(data, 5));
+  const normalizedData = normalize(data, 5);
   const x = useMemo(() => scaleLinear().domain([0, 1]).range([0, width]), [
     width,
   ]);
@@ -40,7 +40,9 @@ export const NormalizedScatterplot = (props) => {
       .append("circle")
       .attr("cx", (d) => x(d[0]))
       .attr("cy", (d) => y(d[1]))
-      .attr("r", 2.5)
+      .attr("r", 3.5)
+      .attr("opacity", 0.7)
+
       .style("fill", (d, i) => metaData[i].color);
 
     circles.attr("cx", (d) => x(d[0])).attr("cy", (d) => y(d[1]));

@@ -39,3 +39,7 @@ export const requestMPData = (dispatch, errorDispatch) => {
       errorDispatch(error);
     });
 };
+
+export const errorDispatch = (err) => {
+  console.log(err);
+};

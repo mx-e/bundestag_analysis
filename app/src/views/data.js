@@ -1,14 +1,17 @@
-import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
 import {
-  requestElecPeriodData,
-  requestMPData,
-  requestVoteData,
-} from "../middleware/requests";
+  Legend,
+  VisControls,
+  ElecPeriodSlider,
+  MPFilters,
+  OverlayControls,
+  PerplexitySlider,
+  VoteFilters,
+} from "./data-controls";
+import { requestElecPeriodData, errorDispatch } from "../middleware/requests";
 import { TSNESolver } from "../components/tsne-solver/tsne-solver";
-
-const dispatchError = (err) => {
-  console.log(err);
-};
+import { useWindowSize } from "../util/util";
+import style from "./data.module.css";
 
 const filterMPs = (mps, optsState) => {
   let out = {};
@@ -30,58 +33,143 @@ const filterVotes = (votes, optsState) => {
   return out;
 };
 
-export const OptsActions = {};
+export const ComputationStates = Object.freeze({
+  RUNNING: "RUNNING",
+  PAUSED: "PAUSED",
+  RESET: "RESET",
+  FINISHED: "FINISHED",
+});
+export const OptsActions = Object.freeze({
+  PLAY_PRESSED: "PLAY_PRESSED",
+  PAUSE_PRESSED: "PAUSE_PRESSED",
+  RESET_PRESSED: "RESET_PRESSED",
+  IS_FINISHED: "IS_FINISHED",
+});
+export const DisplayModes = Object.freeze({
+  MPS: "MPS",
+  VOTES: "VOTES",
+});
+export const Overlays = Object.freeze({
+  MPS: {
+    PARTY: "PARTY",
+  },
+  VOTES: {},
+});
+
+const DEFAULT_ITERATIONS = 1000;
+
+const defaultFilters = { MPS: [], VOTES: [] };
 
 const initialOpts = {
-  elecPeriod: 16,
-  maxIter: 2000,
+  computationState: ComputationStates.RUNNING,
+  maxIter: DEFAULT_ITERATIONS,
+  elecPeriod: 1,
+  displayMode: DisplayModes.MPS,
+  colorOverlay: Overlays.MPS.PARTY,
+  filters: defaultFilters,
   tsne: {
-    epsilon: 8,
-    perplexity: 12,
+    epsilon: 10,
+    perplexity: 15,
     dim: 2,
   },
 };
 
 const optsReducer = (state, action) => {
-  switch (action) {
+  const [type, value] = action;
+  console.log("OPTS_ACTION: " + type + (value ? ", " + value : ""));
+  switch (type) {
+    case OptsActions.PAUSE_PRESSED:
+      return {
+        ...state,
+        computationState: ComputationStates.PAUSED,
+      };
+    case OptsActions.PLAY_PRESSED:
+      return {
+        ...state,
+        computationState: ComputationStates.RUNNING,
+        maxIter:
+          state.computationState === ComputationStates.FINISHED
+            ? state.maxIter + state.maxIter
+            : state.maxIter,
+      };
+    case OptsActions.RESET_PRESSED:
+      return {
+        ...state,
+        computationState: ComputationStates.RESET,
+        maxIter: DEFAULT_ITERATIONS,
+      };
+    case OptsActions.IS_FINISHED:
+      return {
+        ...state,
+        computationState: ComputationStates.FINISHED,
+      };
     default:
       return state;
   }
 };
 
-export const DataView = () => {
+export const DataView = (props) => {
+  const { mps, votes } = props;
   const [optsState, optsDispatch] = useReducer(optsReducer, initialOpts);
   const [votingData, setData] = useState({});
-  const [mps, setMPs] = useState([]);
-  const [votes, setVotes] = useState([]);
 
-  useEffect(() => requestMPData(setMPs, dispatchError), []);
-  useEffect(() => requestVoteData(setVotes, dispatchError), []);
   useEffect(
     () =>
       requestElecPeriodData(
         optsState.elecPeriod,
         votingData,
         setData,
-        dispatchError
+        errorDispatch
       ),
     [optsState.elecPeriod]
   );
 
-  const filteredMps = filterMPs(mps, optsState);
-  const filteredVotes = filterVotes(votes, optsState);
+  const [windowWidth, windowHeight] = useWindowSize();
+  const mainVisHeight = Math.max(windowHeight * 0.5, 500);
+  const mainVisWidth = Math.max(windowWidth * 0.7, 420);
+  const filteredMps = useMemo(() => filterMPs(mps, optsState), [
+    optsState.elecPeriod,
+    mps,
+  ]);
+  const filteredVotes = useMemo(() => filterVotes(votes, optsState), [
+    optsState.elecPeriod,
+    votes,
+  ]);
 
-  if (
-    Object.keys(filteredMps).length > 0 &&
-    Object.keys(filteredVotes).length > 0 &&
-    votingData[optsState.elecPeriod]
-  ) {
+  if (votingData[optsState.elecPeriod]) {
     return (
-      <div>
-        <TSNESolver
-          opts={optsState}
-          data={[votingData, filteredMps, filteredVotes]}
-        />
+      <div className={style.dataViewWrap}>
+        <header className={style.header}>
+          <h1 className={style.title}>bunDestaG vOting behavioUr</h1>
+          <h2 className={style.title}>an analysis</h2>
+        </header>
+        <div className={style.mainVis}>
+          <TSNESolver
+            dims={[mainVisWidth, mainVisHeight]}
+            opts={optsState}
+            optsDispatch={optsDispatch}
+            data={[votingData, filteredMps, filteredVotes]}
+          />
+        </div>
+        <div className={style.visControls}>
+          <Legend />
+          <VisControls
+            computationState={optsState.computationState}
+            optsDispatch={optsDispatch}
+          />
+          <OverlayControls />
+        </div>
+        <div className={style.dataControls}>
+          <PerplexitySlider />
+          <ElecPeriodSlider />
+        </div>
+        <div className={style.centeredSubHeading}>
+          <h5>filter</h5>
+        </div>
+        <div className={style.filterControls}>
+          <MPFilters />
+          <VoteFilters />
+        </div>
       </div>
     );
   } else {

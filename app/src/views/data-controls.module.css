@@ -1,0 +1,5 @@
+.visControlsWrap{
+    display: flex;
+    width: 120px;
+    justify-content: center;
+}

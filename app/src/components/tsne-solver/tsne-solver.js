@@ -1,77 +1,109 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { tsnejs } from "./tsne";
 import { NormalizedScatterplot } from "./normalized-scatterplot";
-import { getPartyColor } from "../../util/util";
+import { getElemColor } from "../../util/color-util";
+import {
+  ComputationStates,
+  OptsActions,
+  Overlays,
+  DisplayModes,
+} from "../../views/data";
 
-const computeTsneMatrix = (mps, votes, votingData, opts) =>
+const computeTsneMatrix = (mps, votes, votingData, elecPeriod) =>
   Object.keys(mps).map((mp) =>
     Object.keys(votes).map((vote) => {
-      const hasCastVote = votingData[opts.elecPeriod].mps[mp].find(
+      const hasCastVote = votingData[elecPeriod].mps[mp].find(
         (vb) => vb[0] + "" === vote
       );
       return hasCastVote ? hasCastVote[1] : 0;
     })
   );
 
-const computeMetaData = (mps, votes, opts) => {
-  return Object.values(mps).map((mp) => ({
-    color: getPartyColor(mp.party),
-  }));
+const computeMetaData = (displayMode, colorOverlay, mps, votes) => {
+  if (displayMode === DisplayModes.MPS) {
+    return Object.values(mps).map((mp) => ({
+      color: getElemColor(colorOverlay, mp),
+    }));
+  } else {
+    return Object.values(votes).map((vote) => ({
+      color: getElemColor(colorOverlay, vote),
+    }));
+  }
 };
 
 export const TSNESolver = (props) => {
-  const dimensions = [800, 400];
   const {
-    opts,
+    dims,
+    opts: {
+      elecPeriod,
+      computationState,
+      tsne,
+      maxIter,
+      colorOverlay,
+      displayMode,
+    },
+    optsDispatch,
     data: [votingData, mpData, votesData],
   } = props;
   const [tsneInstance, setTsneInstance] = useState(null);
   const [displayData, setDisplayData] = useState([]);
   const [step, setStep] = useState(0);
   const tsneData = useMemo(
-    () => computeTsneMatrix(mpData, votesData, votingData, opts),
-    [votingData, mpData, votesData, opts]
+    () => computeTsneMatrix(mpData, votesData, votingData, elecPeriod),
+    [votingData, mpData, votesData, elecPeriod]
   );
 
-  const metaData = useMemo(() => computeMetaData(mpData, votesData, opts), [
-    mpData,
-    votesData,
-    opts.elecPeriod,
-  ]);
+  const metaData = useMemo(
+    () => computeMetaData(displayMode, colorOverlay, mpData, votesData),
+    [mpData, votesData, colorOverlay, displayMode]
+  );
 
   useEffect(() => {
-    setTsneInstance(new tsnejs.tSNE(opts.tsne));
-    console.log("done");
+    setTsneInstance(new tsnejs.tSNE(tsne));
   }, [tsneData]);
 
   useEffect(() => {
+    if (computationState === ComputationStates.RESET) {
+      optsDispatch([OptsActions.PAUSE_PRESSED]);
+      setTsneInstance(new tsnejs.tSNE(tsne));
+    }
+  }, [computationState]);
+
+  useEffect(() => {
     if (tsneInstance) {
-      console.log("1");
       tsneInstance.initDataRaw(tsneData);
+      tsneInstance.step();
+      setDisplayData(tsneInstance.getSolution());
       setStep(step + 1);
     }
   }, [tsneInstance]);
 
   useEffect(() => {
-    if (step < opts.maxIter && tsneInstance) {
-      const timer = setTimeout(() => {
-        Array(2)
-          .fill()
-          .forEach((_) => tsneInstance.step());
+    if (
+      step < maxIter &&
+      tsneInstance &&
+      computationState === ComputationStates.RUNNING
+    ) {
+      setTimeout(() => {
+        tsneInstance.step();
         setDisplayData(tsneInstance.getSolution());
-        setStep(step + 2);
-      }, 10);
-    } else if (step >= opts.maxIter) {
-      console.log("finished");
+        setStep(step + 1);
+      }, 15);
+    } else if (
+      tsneInstance &&
+      step >= maxIter &&
+      computationState === ComputationStates.RUNNING
+    ) {
+      optsDispatch([OptsActions.IS_FINISHED]);
     }
-  }, [step]);
+  }, [step, maxIter, computationState]);
 
   return (
     <div>
       <NormalizedScatterplot
         data={displayData}
         metaData={metaData}
-        dims={dimensions}
+        dims={dims}
       />
     </div>
   );

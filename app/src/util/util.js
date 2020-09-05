@@ -1,11 +1,14 @@
-const partyColorMap = {
-  CDU: "#000000",
-  SPD: "#EB001F",
-  FDP: "#FFED00",
-  CSU: "#008AC5",
-  "Left Party/PDS": "#BE3075",
-  Greens: "#64A12D",
-};
+import { useState, useLayoutEffect } from "react";
 
-export const getPartyColor = (party) =>
-  partyColorMap[party] ? partyColorMap[party] : "#AAAAAA";
+export const useWindowSize = () => {
+  const [size, setSize] = useState([0, 0]);
+  useLayoutEffect(() => {
+    function updateSize() {
+      setSize([window.innerWidth, window.innerHeight]);
+    }
+    window.addEventListener("resize", updateSize);
+    updateSize();
+    return () => window.removeEventListener("resize", updateSize);
+  }, []);
+  return size;
+};
