@@ -21,6 +21,7 @@ h5{
     font-family: 'Major Mono Display', monospace ;
     color: #f8f8f2;
     font-weight: normal;
+    user-select: none;
 }
 
 .mainVis{

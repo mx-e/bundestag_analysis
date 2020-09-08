@@ -1,3 +1,11 @@
+export const selectedColor = "#66d9ef";
+export const activeColor = "#a6e22e";
+export const neutralColor = "#cfcfc2";
+export const inactiveColor = "#75715e";
+export const textColorLight = "#f8f8f2";
+export const textColorDark = "#3e3d32";
+export const errorColor = "#f92672";
+
 const partyColorMap = {
   CDU: "#000000",
   SPD: "#EB001F",
@@ -7,7 +15,15 @@ const partyColorMap = {
   Greens: "#64A12D",
 };
 
-export const getPartyColor = (party) =>
-  partyColorMap[party] ? partyColorMap[party] : "#cfcfc2";
+const genderColorMap = {
+  male: selectedColor,
+  female: errorColor,
+};
 
-export const uniformColorScheme = "#cfcfc2";
+export const getPartyColor = (party) =>
+  partyColorMap[party] ? partyColorMap[party] : neutralColor;
+
+export const getGenderColor = (gender) =>
+  genderColorMap[gender] ? genderColorMap[gender] : neutralColor;
+
+export const getUniformColorScheme = () => "#cfcfc2";

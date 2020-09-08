@@ -18,6 +18,7 @@ const normalize = (X, margin) => {
 
 export const NormalizedScatterplot = (props) => {
   const {
+    showPoints,
     data,
     overlayData,
     dims: [width, height],
@@ -35,6 +36,9 @@ export const NormalizedScatterplot = (props) => {
     const circles = select(circlesRef.current)
       .selectAll("circle")
       .data(normalizedData);
+
+    const color = showPoints ? (d, i) => overlayData[i] : () => "rgba(0,0,0,0)";
+
     circles
       .enter()
       .append("circle")
@@ -42,15 +46,19 @@ export const NormalizedScatterplot = (props) => {
       .attr("cy", (d) => y(d[1]))
       .attr("r", 3.5)
       .attr("opacity", 0.7)
+      .style("fill", color);
 
-      .style("fill", (d, i) => overlayData[i]);
+    circles
+      .attr("cx", (d) => x(d[0]))
+      .attr("cy", (d) => y(d[1]))
+      .style("fill", color);
 
-    circles.attr("cx", (d) => x(d[0])).attr("cy", (d) => y(d[1]));
-  }, [normalizedData]);
+    circles.exit().remove();
+  }, [normalizedData, overlayData]);
 
   return (
     <svg width={width} height={height}>
-      <g ref={circlesRef}></g>
+      <g ref={circlesRef} />
     </svg>
   );
 };

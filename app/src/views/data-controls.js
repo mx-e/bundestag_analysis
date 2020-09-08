@@ -1,8 +1,15 @@
-import React from "react";
-import Button from "../components/ui/button";
+import React, { useState } from "react";
 import { ComputationStates, OptsActions } from "./data";
-import style from "./data-controls.module.css";
 import { Rectangle } from "../components/ui/rectangle";
+import { Overlays } from "./data";
+import style from "./data-controls.module.css";
+import {
+  activeColor,
+  inactiveColor,
+  textColorDark,
+  textColorLight,
+} from "../util/color-util";
+import { Slider } from "@blueprintjs/core";
 
 export const Legend = (props) => {
   const { colorOverlay, uniqueVals } = props;
@@ -32,36 +39,104 @@ export const VisControls = (props) => {
   const isRunning = computationState === ComputationStates.RUNNING;
   return (
     <div className={style.visControlsWrap}>
-      <Button
+      <Rectangle
         onClick={
           isRunning
             ? () => optsDispatch([OptsActions.PAUSE_PRESSED])
             : () => optsDispatch([OptsActions.PLAY_PRESSED])
         }
         icon={isRunning ? "pause" : "play"}
+        iconColor={textColorLight}
+        width={40}
+        height={40}
+        bgColor={textColorDark}
       />
-      <Button
+      <Rectangle
+        bgColor={textColorDark}
         onClick={() => optsDispatch([OptsActions.RESET_PRESSED])}
         icon={"stop"}
+        iconColor={textColorLight}
+        width={40}
+        height={40}
       />
     </div>
   );
 };
 
 export const OverlayControls = (props) => {
+  const { displayMode, colorOverlay, optsDispatch } = props;
+  const width = Math.min(Object.keys(Overlays[displayMode]).length * 50, 400);
+
   return (
     <div className={style.overlayControlsWrap}>
       <h5>overlay</h5>
+      <div className={style.legendRow} style={{ width: width }}>
+        {Object.values(Overlays[displayMode]).map((overlay) => (
+          <Rectangle
+            width={35}
+            height={35}
+            bgColor={
+              overlay.title === colorOverlay.title ? activeColor : textColorDark
+            }
+            key={overlay.title}
+            text={overlay.title}
+            icon={overlay.icon}
+            iconColor={
+              overlay.title === colorOverlay.title
+                ? textColorDark
+                : textColorLight
+            }
+            onClick={() =>
+              optsDispatch([OptsActions.OVERLAY_SELECTED, overlay.title])
+            }
+          />
+        ))}
+      </div>
     </div>
   );
 };
 
 export const PerplexitySlider = (props) => {
-  return <h5>perplexity slider</h5>;
+  const { perplexity, optsDispatch } = props;
+  const [currentValue, setCurrentVal] = useState(perplexity);
+
+  return (
+    <div className={style.sliderWrap}>
+      <h5>t-sne perplexity</h5>
+      <Slider
+        min={5}
+        max={40}
+        value={currentValue}
+        onChange={(newValue) => setCurrentVal(newValue)}
+        onRelease={() =>
+          perplexity !== currentValue
+            ? optsDispatch([OptsActions.PERPLEXITY_CHANGED, currentValue])
+            : null
+        }
+      />
+    </div>
+  );
 };
 
 export const ElecPeriodSlider = (props) => {
-  return <h5>elec-period slider</h5>;
+  const { elecPeriod, optsDispatch } = props;
+  const [currentValue, setCurrentVal] = useState(elecPeriod);
+  return (
+    <div className={style.sliderWrap}>
+      <h5>bundestag</h5>
+      <Slider
+        min={1}
+        max={17}
+        value={currentValue}
+        onChange={(newValue) => setCurrentVal(newValue)}
+        onRelease={() =>
+          elecPeriod !== currentValue
+            ? optsDispatch([OptsActions.ELEC_PERIOD_CHANGED, currentValue])
+            : null
+        }
+      />
+    </div>
+  );
 };
 
 export const MPFilters = (props) => {

@@ -1,4 +1,8 @@
-import { getPartyColor } from "../util/color-util";
+import {
+  getGenderColor,
+  getPartyColor,
+  getUniformColorScheme,
+} from "../util/color-util";
 
 const uniqueVals = (list) => Array.from(new Set(list));
 const union = (listOfLists) => [
@@ -48,13 +52,23 @@ const createUniqueValFunc = (property) => (object) => {
   }
 };
 
-const createColorFunc = (property) => {
+const createColorFuncs = (property) => {
   let coloring;
+  let colorFunc;
   switch (property) {
     case "party":
-      coloring = (mp) => getPartyColor(mp[property]);
+      colorFunc = getPartyColor;
+      coloring = (mp) => colorFunc(mp[property]);
+      break;
+    case "gender":
+      colorFunc = getGenderColor;
+      coloring = (mp) => colorFunc(mp[property]);
+      break;
+    default:
+      colorFunc = getUniformColorScheme;
+      coloring = () => getUniformColorScheme();
   }
-  return (object) => Object.values(object).map(coloring);
+  return [(object) => Object.values(object).map(coloring), colorFunc];
 };
 
 export const Filter = (title, property, value) => {
@@ -63,14 +77,17 @@ export const Filter = (title, property, value) => {
     uniqueValFunc: createUniqueValFunc(property),
     title: title,
     value: value,
+    property: property,
   };
 };
 
-export const ColorOverlay = (title, property) => {
+export const ColorOverlay = (title, property, icon) => {
+  const [colorFunc, colorFuncSingle] = createColorFuncs(property);
   return {
     uniqueValFunc: createUniqueValFunc(property),
-    colorFunc: createColorFunc(property),
-    colorFuncSingle: (party) => getPartyColor(party),
+    colorFunc: colorFunc,
+    colorFuncSingle: colorFuncSingle,
     title: title,
+    icon: icon,
   };
 };

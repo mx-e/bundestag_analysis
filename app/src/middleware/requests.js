@@ -1,17 +1,10 @@
 import axios from "axios";
 
-export const requestElecPeriodData = (
-  elecPeriod,
-  cachedData,
-  dispatch,
-  errorDispatch
-) => {
+export const requestElecPeriodData = (elecPeriod, dispatch, errorDispatch) => {
   axios
     .get("./data/bundestag_" + elecPeriod + ".json")
     .then((result) => {
-      let newData = { ...cachedData };
-      newData[elecPeriod] = result.data;
-      dispatch(newData);
+      dispatch(result.data);
     })
     .catch((error) => {
       errorDispatch(error);

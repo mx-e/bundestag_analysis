@@ -19,12 +19,17 @@ export const ComputationStates = Object.freeze({
   PAUSED: "PAUSED",
   RESET: "RESET",
   FINISHED: "FINISHED",
+  WAITING: "WAITING",
 });
 export const OptsActions = Object.freeze({
   PLAY_PRESSED: "PLAY_PRESSED",
   PAUSE_PRESSED: "PAUSE_PRESSED",
   RESET_PRESSED: "RESET_PRESSED",
   IS_FINISHED: "IS_FINISHED",
+  NEW_DATA_ARRIVED: "NEW_DATA_ARRIVED",
+  OVERLAY_SELECTED: "OVERLAY_SELECTED",
+  ELEC_PERIOD_CHANGED: "ELEC_PERIOD_CHANGED",
+  PERPLEXITY_CHANGED: "PERPLEXITY_CHANGED",
 });
 export const DisplayModes = Object.freeze({
   MPS: "MPS",
@@ -32,13 +37,15 @@ export const DisplayModes = Object.freeze({
 });
 export const Overlays = Object.freeze({
   MPS: {
-    PARTY: ColorOverlay("party", "party"),
+    party: ColorOverlay("party", "party", "heatmap"),
+    gender: ColorOverlay("gender", "gender", "people"),
   },
   VOTES: {},
 });
 
 const DEFAULT_ITERATIONS = 1000;
-const DEFAULT_ELEC_PERIOD = 1;
+const DEFAULT_ELEC_PERIOD = 8;
+const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
 
 const defaultFilters = {
   ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
@@ -47,14 +54,15 @@ const defaultFilters = {
 };
 
 const initialOpts = {
-  computationState: ComputationStates.RUNNING,
+  votingData: {},
+  computationState: ComputationStates.WAITING,
   maxIter: DEFAULT_ITERATIONS,
   displayMode: DisplayModes.MPS,
-  colorOverlay: Overlays.MPS.PARTY,
+  colorOverlay: DEFAULT_MP_OVERLAY,
   filters: defaultFilters,
   tsne: {
     epsilon: 10,
-    perplexity: 15,
+    perplexity: 20,
     dim: 2,
   },
 };
@@ -88,6 +96,39 @@ const optsReducer = (state, action) => {
         ...state,
         computationState: ComputationStates.FINISHED,
       };
+    case OptsActions.OVERLAY_SELECTED:
+      return { ...state, colorOverlay: Overlays[state.displayMode][value] };
+    case OptsActions.ELEC_PERIOD_CHANGED:
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          ELEC_PERIOD: Filter(
+            state.filters.ELEC_PERIOD.title,
+            state.filters.ELEC_PERIOD.property,
+            value
+          ),
+        },
+        computationState: state.votingData[value]
+          ? ComputationStates.RESET
+          : ComputationStates.WAITING,
+        maxIter: DEFAULT_ITERATIONS,
+      };
+    case OptsActions.PERPLEXITY_CHANGED:
+      return {
+        ...state,
+        computationState: ComputationStates.RESET,
+        tsne: { ...state.tsne, perplexity: value },
+      };
+    case OptsActions.NEW_DATA_ARRIVED:
+      let newData = { ...state.votingData };
+      newData[state.filters.ELEC_PERIOD.value] = value;
+      return {
+        ...state,
+        computationState: ComputationStates.RESET,
+        votingData: newData,
+      };
+
     default:
       return state;
   }
@@ -120,17 +161,29 @@ const computeOverlayData = (displayMode, overlay, mps, votes) =>
     ? [overlay.colorFunc(mps), overlay.uniqueValFunc(mps)]
     : [overlay.colorFunc(mps), overlay.uniqueValFunc(votes)];
 
+//MAIN
 export const DataView = (props) => {
   const { mps, votes } = props;
   const [optsState, optsDispatch] = useReducer(optsReducer, initialOpts);
-  const [votingData, setData] = useState({});
 
-  const { displayMode, computationState, filters, colorOverlay } = optsState;
+  const {
+    votingData,
+    displayMode,
+    computationState,
+    filters,
+    colorOverlay,
+    tsne,
+  } = optsState;
   const elecPeriod = filters.ELEC_PERIOD.value;
-  useEffect(
-    () => requestElecPeriodData(elecPeriod, votingData, setData, errorDispatch),
-    [elecPeriod]
-  );
+  useEffect(() => {
+    if (!votingData[elecPeriod]) {
+      requestElecPeriodData(
+        elecPeriod,
+        (data) => optsDispatch([OptsActions.NEW_DATA_ARRIVED, data]),
+        errorDispatch
+      );
+    }
+  }, [elecPeriod]);
 
   const [windowWidth, windowHeight] = useWindowSize();
   const mainVisHeight = Math.max(windowHeight * 0.5, 500);
@@ -150,44 +203,47 @@ export const DataView = (props) => {
     [displayMode, colorOverlay, filteredMPs, filteredVotes]
   );
 
-  if (votingData[elecPeriod]) {
-    return (
-      <div className={style.dataViewWrap}>
-        <header className={style.header}>
-          <h1 className={style.title}>bunDestaG vOting behavioUr</h1>
-          <h2 className={style.title}>an analysis</h2>
-        </header>
-        <div className={style.mainVis}>
-          <TSNESolver
-            dims={[mainVisWidth, mainVisHeight]}
-            elecPeriod={elecPeriod}
-            opts={optsState}
-            optsDispatch={optsDispatch}
-            data={[votingData, filteredMPs, filteredVotes, overlayColors]}
-          />
-        </div>
-        <div className={style.visControls}>
-          <Legend colorOverlay={colorOverlay} uniqueVals={overlayVals} />
-          <VisControls
-            computationState={computationState}
-            optsDispatch={optsDispatch}
-          />
-          <OverlayControls />
-        </div>
-        <div className={style.dataControls}>
-          <PerplexitySlider />
-          <ElecPeriodSlider />
-        </div>
-        <div className={style.centeredSubHeading}>
-          <h5>filter</h5>
-        </div>
-        <div className={style.filterControls}>
-          <MPFilters />
-          <VoteFilters />
-        </div>
+  return (
+    <div className={style.dataViewWrap}>
+      <header className={style.header}>
+        <h1 className={style.title}>bunDestaG vOting behavioUr</h1>
+        <h2 className={style.title}>an analysis</h2>
+      </header>
+      <div className={style.mainVis}>
+        <TSNESolver
+          dims={[mainVisWidth, mainVisHeight]}
+          elecPeriod={elecPeriod}
+          opts={optsState}
+          optsDispatch={optsDispatch}
+          data={[votingData, filteredMPs, filteredVotes, overlayColors]}
+        />
       </div>
-    );
-  } else {
-    return <div>WAITING FOR DATA...</div>;
-  }
+      <div className={style.visControls}>
+        <Legend colorOverlay={colorOverlay} uniqueVals={overlayVals} />
+        <VisControls
+          computationState={computationState}
+          optsDispatch={optsDispatch}
+        />
+        <OverlayControls
+          displayMode={displayMode}
+          colorOverlay={colorOverlay}
+          optsDispatch={optsDispatch}
+        />
+      </div>
+      <div className={style.dataControls}>
+        <PerplexitySlider
+          perplexity={tsne.perplexity}
+          optsDispatch={optsDispatch}
+        />
+        <ElecPeriodSlider elecPeriod={elecPeriod} optsDispatch={optsDispatch} />
+      </div>
+      <div className={style.centeredSubHeading}>
+        <h5>filter</h5>
+      </div>
+      <div className={style.filterControls}>
+        <MPFilters />
+        <VoteFilters />
+      </div>
+    </div>
+  );
 };

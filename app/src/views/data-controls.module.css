@@ -1,7 +1,7 @@
 .visControlsWrap{
     display: flex;
-    width: 120px;
-    justify-content: center;
+    width: 110px;
+    justify-content: space-evenly;
 }
 
 .legendRow{
@@ -19,5 +19,10 @@
 
 .overlayControlsWrap{
     width:400px;
+    text-align: center;
+}
+
+.sliderWrap{
+    width: 400px;
     text-align: center;
 }
