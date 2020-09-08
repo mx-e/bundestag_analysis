@@ -20,6 +20,7 @@ header{
 h5{
     font-family: 'Major Mono Display', monospace ;
     color: #f8f8f2;
+    font-size: 12px;
     font-weight: normal;
     user-select: none;
 }
@@ -41,7 +42,7 @@ h5{
 .dataControls{
     margin-top: 30px;
     margin-bottom: 30px;
-    height: 60px;
+    height: 120px;
     display: flex;
     justify-content: space-evenly;
     flex-wrap: wrap;
@@ -54,7 +55,7 @@ h5{
 }
 
 .filterControls{
-    margin-top: 30px;
+    margin-top: 15px;
     margin-bottom: 30px;
     display: flex;
     justify-content: space-evenly;

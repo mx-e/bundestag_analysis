@@ -5,11 +5,14 @@ import { Overlays } from "./data";
 import style from "./data-controls.module.css";
 import {
   activeColor,
+  backgroundColor,
   inactiveColor,
   textColorDark,
   textColorLight,
 } from "../util/color-util";
 import { Slider } from "@blueprintjs/core";
+import { Filter } from "../components/ui/filter";
+import { elecPeriodMap } from "../util/util";
 
 export const Legend = (props) => {
   const { colorOverlay, uniqueVals } = props;
@@ -107,6 +110,7 @@ export const PerplexitySlider = (props) => {
         min={5}
         max={40}
         value={currentValue}
+        labelRenderer={false}
         onChange={(newValue) => setCurrentVal(newValue)}
         onRelease={() =>
           perplexity !== currentValue
@@ -114,6 +118,7 @@ export const PerplexitySlider = (props) => {
             : null
         }
       />
+      <h6>{currentValue}</h6>
     </div>
   );
 };
@@ -121,6 +126,10 @@ export const PerplexitySlider = (props) => {
 export const ElecPeriodSlider = (props) => {
   const { elecPeriod, optsDispatch } = props;
   const [currentValue, setCurrentVal] = useState(elecPeriod);
+  const labelGenerator = (value) => {
+    const [from, to] = elecPeriodMap[value];
+    return "of " + from + " to " + to;
+  };
   return (
     <div className={style.sliderWrap}>
       <h5>bundestag</h5>
@@ -129,20 +138,41 @@ export const ElecPeriodSlider = (props) => {
         max={17}
         value={currentValue}
         onChange={(newValue) => setCurrentVal(newValue)}
+        labelRenderer={false}
         onRelease={() =>
           elecPeriod !== currentValue
             ? optsDispatch([OptsActions.ELEC_PERIOD_CHANGED, currentValue])
             : null
         }
       />
+      <h6>{labelGenerator(currentValue)}</h6>
     </div>
   );
 };
 
-export const MPFilters = (props) => {
-  return <h5>mps</h5>;
-};
-
-export const VoteFilters = (props) => {
-  return <h5>votes</h5>;
+export const FiltersGroup = (props) => {
+  const {
+    uniqueFilterVals,
+    groupName,
+    filters,
+    optsDispatch,
+    isMirrored,
+  } = props;
+  return (
+    <div className={style.filterGroupWrap}>
+      <h5>{groupName.toLowerCase()}</h5>
+      {filters.map((filter, i) => (
+        <Filter
+          key={groupName + filter.title}
+          filter={filter}
+          uniqueVals={uniqueFilterVals[filter.title]}
+          inactiveColor={backgroundColor}
+          onFilterChange={(val) =>
+            optsDispatch([OptsActions.MP_FILTER_CHANGED, [filter, val]])
+          }
+          isMirrored={isMirrored}
+        />
+      ))}
+    </div>
+  );
 };

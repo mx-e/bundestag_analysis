@@ -1,0 +1,33 @@
+
+.filterWrap{
+    display: flex;
+    width: 410px;
+    margin-top: 30px;
+    align-content: start;
+}
+
+.filterTitle{
+    color: white;
+    font-family: "Open Sans", sans-serif;
+    font-size: 12px;
+}
+
+.filterSwitches{
+    display: flex;
+}
+
+.filterSwitches>div {
+    margin-left: 4px;
+    margin-right: 4px;
+    margin-top: 4px;
+}
+
+h6 {
+    font-size: 10px;
+    color: #f8f8f2;
+    font-family: 'Major Mono Display', monospace;
+    margin-top: 16px;
+    margin-bottom: 16px;
+    font-weight: normal;
+    user-select: none;
+}

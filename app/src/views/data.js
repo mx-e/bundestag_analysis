@@ -7,12 +7,14 @@ import {
   OverlayControls,
   PerplexitySlider,
   VoteFilters,
+  FiltersGroup,
 } from "./data-controls";
 import { requestElecPeriodData, errorDispatch } from "../middleware/requests";
 import { TSNESolver } from "../components/tsne-solver/tsne-solver";
 import { useWindowSize } from "../util/util";
-import { ColorOverlay, Filter } from "./data-filters";
+import { ColorOverlay, Filter, getUniqueVals } from "./data-filters";
 import style from "./data.module.css";
+import { partyColorMap } from "../util/color-util";
 
 export const ComputationStates = Object.freeze({
   RUNNING: "RUNNING",
@@ -30,6 +32,7 @@ export const OptsActions = Object.freeze({
   OVERLAY_SELECTED: "OVERLAY_SELECTED",
   ELEC_PERIOD_CHANGED: "ELEC_PERIOD_CHANGED",
   PERPLEXITY_CHANGED: "PERPLEXITY_CHANGED",
+  MP_FILTER_CHANGED: "MP_FILTER_CHANGED",
 });
 export const DisplayModes = Object.freeze({
   MPS: "MPS",
@@ -49,7 +52,7 @@ const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
 
 const defaultFilters = {
   ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
-  MPS: [],
+  MPS: [Filter("party", "party", Object.keys(partyColorMap))],
   VOTES: [],
 };
 
@@ -69,7 +72,7 @@ const initialOpts = {
 
 const optsReducer = (state, action) => {
   const [type, value] = action;
-  console.log("OPTS_ACTION: " + type + (value ? ", " + value : ""));
+  console.log("OPTS_ACTION:", type, value);
   switch (type) {
     case OptsActions.PAUSE_PRESSED:
       return {
@@ -127,6 +130,22 @@ const optsReducer = (state, action) => {
         ...state,
         computationState: ComputationStates.RESET,
         votingData: newData,
+      };
+    case OptsActions.MP_FILTER_CHANGED:
+      const [filter, changedValue] = value;
+      const newValue = filter.value.includes(changedValue)
+        ? filter.value.filter((val) => val !== changedValue)
+        : filter.value.concat([changedValue]);
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          MPS: [
+            ...state.filters.MPS.filter((fil) => fil.title !== filter.title),
+            Filter(filter.title, filter.property, newValue),
+          ],
+        },
+        computationState: ComputationStates.RESET,
       };
 
     default:
@@ -241,8 +260,20 @@ export const DataView = (props) => {
         <h5>filter</h5>
       </div>
       <div className={style.filterControls}>
-        <MPFilters />
-        <VoteFilters />
+        <FiltersGroup
+          uniqueFilterVals={uniqueFilterVals.MPS}
+          filters={filters.MPS}
+          groupName={DisplayModes.MPS}
+          optsDispatch={optsDispatch}
+          isMirrored={true}
+        />
+        <FiltersGroup
+          uniqueFilterVals={uniqueFilterVals.VOTES}
+          filters={filters.VOTES}
+          groupName={DisplayModes.VOTES}
+          optsDispatch={optsDispatch}
+          isMirrored={false}
+        />
       </div>
     </div>
   );

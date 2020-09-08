@@ -93,7 +93,7 @@ export const TSNESolver = (props) => {
       const timer = setTimeout(() => {
         tsneInstance.step();
         tsneSolverDispatch([SolverActions.STEP_TIMEOUT_FIRED]);
-      }, 10);
+      }, 15);
       return () => clearTimeout(timer);
     } else if (
       tsneInstance &&

@@ -1,4 +1,5 @@
 import React from "react";
+import PropTypes from "prop-types";
 import { Icon } from "@blueprintjs/core";
 import style from "./rectangle.module.css";
 
@@ -6,7 +7,16 @@ const shortenText = (text, chars) =>
   text.substring(0, Math.min(text.length, chars));
 
 export const Rectangle = (props) => {
-  const { height, width, bgColor, text, icon, iconColor, onClick } = props;
+  const {
+    height,
+    width,
+    bgColor,
+    text,
+    icon,
+    iconColor,
+    onClick,
+    borderColor,
+  } = props;
   const rectWidth = width ? width : 20;
   const rectHeight = height ? height : 20;
   const subTitleMargin = 5;
@@ -26,6 +36,7 @@ export const Rectangle = (props) => {
   return (
     <div
       style={{
+        border: borderColor ? "4px solid " + borderColor : "none",
         backgroundColor: bgColor,
         width: rectWidth,
         height: rectHeight,
@@ -48,4 +59,15 @@ export const Rectangle = (props) => {
       )}
     </div>
   );
+};
+
+Rectangle.propTypes = {
+  height: PropTypes.number,
+  width: PropTypes.number,
+  bgColor: PropTypes.string.isRequired,
+  text: PropTypes.string,
+  icon: PropTypes.string,
+  iconColor: PropTypes.string,
+  onClick: PropTypes.func,
+  borderColor: PropTypes.string,
 };

@@ -4,9 +4,11 @@ import {
   getUniformColorScheme,
 } from "../util/color-util";
 
+export const getUniqueVals = (object, property) =>
+  uniqueVals(Object.values(object).map((val) => val[property]));
 const uniqueVals = (list) => Array.from(new Set(list));
 const union = (listOfLists) => [
-  ...listOfLists.reduce((setList, list) => new Set(...setList, list)),
+  ...listOfLists.reduce((setList, list) => new Set([...setList, ...list])),
 ];
 
 const listFilter = (object, property, listOfValues) => {
@@ -46,7 +48,7 @@ const createUniqueValFunc = (property) => (object) => {
   if (Array.isArray(Object.values(object)[0][property])) {
     return []; //explicit because it might be needed in the future
   } else if (Object.values(object)[0][property]) {
-    return uniqueVals(Object.values(object).map((val) => val[property]));
+    return getUniqueVals(object, property);
   } else {
     return [];
   }
@@ -72,9 +74,11 @@ const createColorFuncs = (property) => {
 };
 
 export const Filter = (title, property, value) => {
+  const [, colorFuncSingle] = createColorFuncs(property);
   return {
     filterFunc: createFilterFunc(property, value),
     uniqueValFunc: createUniqueValFunc(property),
+    colorFunc: colorFuncSingle,
     title: title,
     value: value,
     property: property,

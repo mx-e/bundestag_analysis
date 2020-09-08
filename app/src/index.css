@@ -15,3 +15,29 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+.bp3-slider-progress.bp3-intent-primary{
+  background-color: #f92672;
+  opacity: 80%;
+}
+
+.bp3-slider-progress{
+  background-color: #3e3d32;
+}
+
+.bp3-slider-track{
+  border-radius: 2px;
+}
+.bp3-slider-handle{
+  border-radius: 2px;
+  background-color: #f8f8f2;
+  background-image: none;
+  height: 25px;
+  width: 25px;
+  transform: translate(0,-18%);
+}
+
+.bp3-slider-handle:focus{
+  outline: none;
+  outline-offset: 0;
+}

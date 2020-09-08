@@ -5,8 +5,9 @@ export const inactiveColor = "#75715e";
 export const textColorLight = "#f8f8f2";
 export const textColorDark = "#3e3d32";
 export const errorColor = "#f92672";
+export const backgroundColor = "#272822";
 
-const partyColorMap = {
+export const partyColorMap = {
   CDU: "#000000",
   SPD: "#EB001F",
   FDP: "#FFED00",
