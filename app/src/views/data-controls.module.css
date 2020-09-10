@@ -1,7 +1,36 @@
 .visControlsWrap{
     display: flex;
     width: 110px;
+    flex-direction: column;
+}
+
+.pausePlayWrap{
+    display: flex;
+    flex-direction: row;
+    width: 110px;
     justify-content: space-evenly;
+    align-items: center;
+}
+
+.pivotWrap{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-top: 10px;
+    width: 110px;
+    margin-bottom: -6px;
+}
+
+.pivotStatus{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    width: 110px;
+}
+
+.pivotStatusText{
+    width: 55px;
+    text-align: center;
 }
 
 .legendRow{

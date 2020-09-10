@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { tsnejs } from "./tsne";
 import { NormalizedScatterplot } from "./normalized-scatterplot";
-import { ComputationStates, OptsActions } from "../../views/data";
+import { ComputationStates, DisplayModes, OptsActions } from "../../views/data";
+import { elecPeriodMap } from "../../util/util";
 
 const SolverActions = Object.freeze({
   COMPUTATION_RESET: "COMPUTATION_RESET",
@@ -18,13 +19,19 @@ const tsneSolverReducer = (state, action) => {
   const [type, value] = action;
   switch (type) {
     case SolverActions.COMPUTATION_RESET:
-      const [[votingData, mpData, votesData], tsneOpts, elecPeriod] = value;
+      const [
+        [votingData, mpData, votesData],
+        tsneOpts,
+        elecPeriod,
+        displayMode,
+      ] = value;
       const newInstance = new tsnejs.tSNE(tsneOpts);
       const tsneData = computeTsneMatrix(
         mpData,
         votesData,
         votingData,
-        elecPeriod
+        elecPeriod,
+        displayMode
       );
       newInstance.initDataRaw(tsneData);
       newInstance.step();
@@ -47,20 +54,33 @@ const tsneSolverReducer = (state, action) => {
   }
 };
 
-const computeTsneMatrix = (mps, votes, votingData, elecPeriod) => {
-  if (!votingData[elecPeriod]) return [];
-  return Object.keys(mps).map((mp) =>
-    Object.keys(votes).map((vote) => {
-      const hasCastVote = votingData[elecPeriod].mps[mp].find(
-        (vb) => vb[0] + "" === vote
-      );
-      return hasCastVote ? hasCastVote[1] : 0;
-    })
+const votingBehaviourToCoords = (mp, vote, votingData, elecPeriod) => {
+  const hasCastVote = votingData[elecPeriod].mps[mp].find(
+    (vb) => vb[0] + "" === vote
   );
+  return hasCastVote ? hasCastVote[1] : 0;
+};
+
+const computeTsneMatrix = (mps, votes, votingData, elecPeriod, displayMode) => {
+  if (!votingData[elecPeriod]) return [];
+  else if (displayMode === DisplayModes.MPS) {
+    return Object.keys(mps).map((mp) =>
+      Object.keys(votes).map((vote) =>
+        votingBehaviourToCoords(mp, vote, votingData, elecPeriod)
+      )
+    );
+  } else {
+    return Object.keys(votes).map((vote) =>
+      Object.keys(mps).map((mp) =>
+        votingBehaviourToCoords(mp, vote, votingData, elecPeriod)
+      )
+    );
+  }
 };
 
 export const TSNESolver = (props) => {
   const {
+    displayMode,
     dims,
     elecPeriod,
     opts: { computationState, tsne, maxIter },
@@ -78,7 +98,7 @@ export const TSNESolver = (props) => {
     if (computationState === ComputationStates.RESET) {
       tsneSolverDispatch([
         SolverActions.COMPUTATION_RESET,
-        [data, tsne, elecPeriod],
+        [data, tsne, elecPeriod, displayMode],
       ]);
       optsDispatch([OptsActions.PLAY_PRESSED]);
     }

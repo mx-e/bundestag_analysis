@@ -28,6 +28,7 @@ export const OptsActions = Object.freeze({
   PAUSE_PRESSED: "PAUSE_PRESSED",
   RESET_PRESSED: "RESET_PRESSED",
   IS_FINISHED: "IS_FINISHED",
+  DISPLAY_MODE_SWITCHED: "DISPLAY_MODE_SWITCHED",
   NEW_DATA_ARRIVED: "NEW_DATA_ARRIVED",
   OVERLAY_SELECTED: "OVERLAY_SELECTED",
   ELEC_PERIOD_CHANGED: "ELEC_PERIOD_CHANGED",
@@ -46,7 +47,7 @@ export const Overlays = Object.freeze({
   VOTES: {},
 });
 
-const DEFAULT_ITERATIONS = 1000;
+const DEFAULT_ITERATIONS = 2000;
 const DEFAULT_ELEC_PERIOD = 8;
 const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
 
@@ -147,6 +148,15 @@ const optsReducer = (state, action) => {
         },
         computationState: ComputationStates.RESET,
       };
+    case OptsActions.DISPLAY_MODE_SWITCHED:
+      return {
+        ...state,
+        displayMode:
+          state.displayMode === DisplayModes.MPS
+            ? DisplayModes.VOTES
+            : DisplayModes.MPS,
+        computationState: ComputationStates.RESET,
+      };
 
     default:
       return state;
@@ -230,6 +240,7 @@ export const DataView = (props) => {
       </header>
       <div className={style.mainVis}>
         <TSNESolver
+          displayMode={displayMode}
           dims={[mainVisWidth, mainVisHeight]}
           elecPeriod={elecPeriod}
           opts={optsState}
@@ -240,6 +251,7 @@ export const DataView = (props) => {
       <div className={style.visControls}>
         <Legend colorOverlay={colorOverlay} uniqueVals={overlayVals} />
         <VisControls
+          displayMode={displayMode}
           computationState={computationState}
           optsDispatch={optsDispatch}
         />

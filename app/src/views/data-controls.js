@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { ComputationStates, OptsActions } from "./data";
+import { ComputationStates, DisplayModes, OptsActions } from "./data";
 import { Rectangle } from "../components/ui/rectangle";
 import { Overlays } from "./data";
 import style from "./data-controls.module.css";
@@ -38,30 +38,48 @@ export const Legend = (props) => {
 };
 
 export const VisControls = (props) => {
-  const { computationState, optsDispatch } = props;
+  const { displayMode, computationState, optsDispatch } = props;
   const isRunning = computationState === ComputationStates.RUNNING;
   return (
     <div className={style.visControlsWrap}>
-      <Rectangle
-        onClick={
-          isRunning
-            ? () => optsDispatch([OptsActions.PAUSE_PRESSED])
-            : () => optsDispatch([OptsActions.PLAY_PRESSED])
-        }
-        icon={isRunning ? "pause" : "play"}
-        iconColor={textColorLight}
-        width={40}
-        height={40}
-        bgColor={textColorDark}
-      />
-      <Rectangle
-        bgColor={textColorDark}
-        onClick={() => optsDispatch([OptsActions.RESET_PRESSED])}
-        icon={"stop"}
-        iconColor={textColorLight}
-        width={40}
-        height={40}
-      />
+      <div className={style.pausePlayWrap}>
+        <Rectangle
+          onClick={
+            isRunning
+              ? () => optsDispatch([OptsActions.PAUSE_PRESSED])
+              : () => optsDispatch([OptsActions.PLAY_PRESSED])
+          }
+          icon={isRunning ? "pause" : "play"}
+          iconColor={textColorLight}
+          width={40}
+          height={40}
+          bgColor={textColorDark}
+        />
+        <Rectangle
+          bgColor={textColorDark}
+          onClick={() => optsDispatch([OptsActions.RESET_PRESSED])}
+          icon={"stop"}
+          iconColor={textColorLight}
+          width={40}
+          height={40}
+        />
+      </div>
+      <div className={style.pivotWrap}>
+        <Rectangle
+          bgColor={textColorDark}
+          iconColor={textColorLight}
+          width={40}
+          height={40}
+          icon={"pivot-table"}
+          onClick={() => optsDispatch([OptsActions.DISPLAY_MODE_SWITCHED])}
+        />
+      </div>
+      <div className={style.pivotStatus}>
+        <h6 className={style.pivotStatusText}>1 dot</h6> <h6>=</h6>
+        <h6 className={style.pivotStatusText}>
+          1 {displayMode === DisplayModes.MPS ? "mp" : "vote"}
+        </h6>
+      </div>
     </div>
   );
 };

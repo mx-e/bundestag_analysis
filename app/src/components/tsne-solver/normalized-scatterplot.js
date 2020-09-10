@@ -44,7 +44,7 @@ export const NormalizedScatterplot = (props) => {
       .append("circle")
       .attr("cx", (d) => x(d[0]))
       .attr("cy", (d) => y(d[1]))
-      .attr("r", 3.5)
+      .attr("r", 4)
       .attr("opacity", 0.7)
       .style("fill", color);
 
