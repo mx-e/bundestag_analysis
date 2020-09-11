@@ -3,8 +3,10 @@ import PropTypes from "prop-types";
 import { Icon } from "@blueprintjs/core";
 import style from "./rectangle.module.css";
 
+const MAX_TEXT_LEN = 13;
+
 const shortenText = (text, chars) =>
-  text.substring(0, Math.min(text.length, chars));
+  text.length > chars - 2 ? text.substring(0, chars - 3) + "..." : text; // # ... = 3 chars => -2
 
 export const Rectangle = (props) => {
   const {
@@ -40,7 +42,7 @@ export const Rectangle = (props) => {
         backgroundColor: bgColor,
         width: rectWidth,
         height: rectHeight,
-        opacity: 0.8,
+        opacity: 0.85,
         cursor: onClick ? "pointer" : "default",
       }}
       className={style.rectWrap}
@@ -54,7 +56,7 @@ export const Rectangle = (props) => {
           }}
           className={style.rectSubtitle}
         >
-          {shortenText(text, 6)}
+          {shortenText(text, MAX_TEXT_LEN)}
         </div>
       )}
     </div>

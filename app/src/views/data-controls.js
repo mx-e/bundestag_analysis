@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { ComputationStates, DisplayModes, OptsActions } from "./data";
 import { Rectangle } from "../components/ui/rectangle";
 import { Overlays } from "./data";
@@ -6,7 +6,9 @@ import style from "./data-controls.module.css";
 import {
   activeColor,
   backgroundColor,
+  errorColor,
   inactiveColor,
+  selectedColor,
   textColorDark,
   textColorLight,
 } from "../util/color-util";
@@ -16,7 +18,16 @@ import { elecPeriodMap } from "../util/util";
 
 export const Legend = (props) => {
   const { colorOverlay, uniqueVals } = props;
-  const width = Math.min(uniqueVals.length * 50, 400);
+  const tooManyValues = uniqueVals.length > 7;
+  const width = Math.min(uniqueVals.length * 60, 410);
+  const [selectedVal, setSelectedVal] = useState(uniqueVals[0]);
+
+  useEffect(() => {
+    if (!uniqueVals.includes(selectedVal)) {
+      setSelectedVal(uniqueVals[0]);
+    }
+  }, [uniqueVals]);
+
   return (
     <div className={style.legendWrap}>
       <h5>legend</h5>
@@ -28,20 +39,40 @@ export const Legend = (props) => {
               height={35}
               key={val}
               bgColor={colorOverlay.colorFuncSingle(val)}
-              text={val}
+              text={tooManyValues ? null : val}
+              borderColor={
+                tooManyValues && selectedVal === val ? selectedColor : null
+              }
+              onClick={tooManyValues ? () => setSelectedVal(val) : null}
             />
           ))}
         </div>
       )}
+      {tooManyValues && <h6>{selectedVal.toLowerCase()}</h6>}
     </div>
   );
 };
 
 export const VisControls = (props) => {
-  const { displayMode, computationState, optsDispatch } = props;
+  const {
+    displayMode,
+    computationState,
+    optsDispatch,
+    magnificationEnabled,
+  } = props;
   const isRunning = computationState === ComputationStates.RUNNING;
   return (
     <div className={style.visControlsWrap}>
+      <div className={style.magnifierSwitch}>
+        <Rectangle
+          bgColor={magnificationEnabled ? activeColor : errorColor}
+          icon={"zoom-in"}
+          iconColor={textColorDark}
+          width={40}
+          height={40}
+          onClick={() => optsDispatch([OptsActions.MAGNIFIER_SWITCHED])}
+        />
+      </div>
       <div className={style.pausePlayWrap}>
         <Rectangle
           onClick={
@@ -86,31 +117,34 @@ export const VisControls = (props) => {
 
 export const OverlayControls = (props) => {
   const { displayMode, colorOverlay, optsDispatch } = props;
-  const width = Math.min(Object.keys(Overlays[displayMode]).length * 50, 400);
-
+  const width = Math.min(Object.keys(Overlays[displayMode]).length * 60, 410);
+  console.log(Overlays[displayMode]);
   return (
     <div className={style.overlayControlsWrap}>
       <h5>overlay</h5>
       <div className={style.legendRow} style={{ width: width }}>
         {Object.values(Overlays[displayMode]).map((overlay) => (
-          <Rectangle
-            width={35}
-            height={35}
-            bgColor={
-              overlay.title === colorOverlay.title ? activeColor : textColorDark
-            }
-            key={overlay.title}
-            text={overlay.title}
-            icon={overlay.icon}
-            iconColor={
-              overlay.title === colorOverlay.title
-                ? textColorDark
-                : textColorLight
-            }
-            onClick={() =>
-              optsDispatch([OptsActions.OVERLAY_SELECTED, overlay.title])
-            }
-          />
+          <div className={style.overlayElem} key={overlay.title}>
+            <Rectangle
+              width={35}
+              height={35}
+              bgColor={
+                overlay.title === colorOverlay.title
+                  ? selectedColor
+                  : textColorDark
+              }
+              text={overlay.title}
+              icon={overlay.icon}
+              iconColor={
+                overlay.title === colorOverlay.title
+                  ? textColorDark
+                  : textColorLight
+              }
+              onClick={() =>
+                optsDispatch([OptsActions.OVERLAY_SELECTED, overlay.property])
+              }
+            />
+          </div>
         ))}
       </div>
     </div>

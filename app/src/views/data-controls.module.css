@@ -4,6 +4,13 @@
     flex-direction: column;
 }
 
+.magnifierSwitch{
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    margin-bottom: 10px;
+}
+
 .pausePlayWrap{
     display: flex;
     flex-direction: row;
@@ -36,19 +43,26 @@
 .legendRow{
     display: flex;
     flex-direction: row;
-    justify-content: space-evenly;
+    justify-content: space-between;
     margin-right: auto;
     margin-left: auto;
 }
 
+
+
 .legendWrap{
     text-align: center;
-    width: 400px;
+    width: 410px;
 }
 
 .overlayControlsWrap{
-    width:400px;
+    width:410px;
     text-align: center;
+}
+
+.overlayElem{
+    margin-left: 10px;
+    margin-right: 10px;
 }
 
 .sliderWrap{

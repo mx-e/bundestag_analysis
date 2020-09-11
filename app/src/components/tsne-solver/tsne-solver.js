@@ -2,7 +2,6 @@ import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { tsnejs } from "./tsne";
 import { NormalizedScatterplot } from "./normalized-scatterplot";
 import { ComputationStates, DisplayModes, OptsActions } from "../../views/data";
-import { elecPeriodMap } from "../../util/util";
 
 const SolverActions = Object.freeze({
   COMPUTATION_RESET: "COMPUTATION_RESET",
@@ -33,9 +32,12 @@ const tsneSolverReducer = (state, action) => {
         elecPeriod,
         displayMode
       );
-      newInstance.initDataRaw(tsneData);
-      newInstance.step();
-      const displayData = newInstance.getSolution();
+      let displayData = [];
+      if (tsneData[0]) {
+        newInstance.initDataRaw(tsneData);
+        newInstance.step();
+        displayData = newInstance.getSolution();
+      }
       return {
         ...state,
         tsneInstance: newInstance,
@@ -62,7 +64,12 @@ const votingBehaviourToCoords = (mp, vote, votingData, elecPeriod) => {
 };
 
 const computeTsneMatrix = (mps, votes, votingData, elecPeriod, displayMode) => {
-  if (!votingData[elecPeriod]) return [];
+  if (
+    !votingData[elecPeriod] ||
+    Object.keys(mps).length === 0 ||
+    Object.keys(votes).length === 0
+  )
+    return [];
   else if (displayMode === DisplayModes.MPS) {
     return Object.keys(mps).map((mp) =>
       Object.keys(votes).map((vote) =>
@@ -85,6 +92,7 @@ export const TSNESolver = (props) => {
     elecPeriod,
     opts: { computationState, tsne, maxIter },
     optsDispatch,
+    magnificationEnabled,
     data,
     data: [, , , overlayData],
   } = props;
@@ -132,9 +140,15 @@ export const TSNESolver = (props) => {
           computationState !== ComputationStates.WAITING &&
           computationState !== ComputationStates.RESET
         }
-        data={displayData}
+        data={displayData ? displayData : []}
         overlayData={overlayData}
         dims={dims}
+        mouseOverEnabled={
+          computationState === ComputationStates.FINISHED ||
+          computationState === ComputationStates.PAUSED
+        }
+        mouseOverDisabledMessage="wait for the computation to finish or pause it to interact with the plot"
+        magnificationEnabled={magnificationEnabled}
       />
     </div>
   );

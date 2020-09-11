@@ -34,6 +34,7 @@ export const OptsActions = Object.freeze({
   ELEC_PERIOD_CHANGED: "ELEC_PERIOD_CHANGED",
   PERPLEXITY_CHANGED: "PERPLEXITY_CHANGED",
   MP_FILTER_CHANGED: "MP_FILTER_CHANGED",
+  MAGNIFIER_SWITCHED: "MAGNIFIER_SWITCHED",
 });
 export const DisplayModes = Object.freeze({
   MPS: "MPS",
@@ -44,12 +45,17 @@ export const Overlays = Object.freeze({
     party: ColorOverlay("party", "party", "heatmap"),
     gender: ColorOverlay("gender", "gender", "people"),
   },
-  VOTES: {},
+  VOTES: {
+    sponsors: ColorOverlay("sponsors", "sponsors", "heatmap"),
+    policy: ColorOverlay("subject", "policy", "box"),
+  },
 });
 
 const DEFAULT_ITERATIONS = 2000;
 const DEFAULT_ELEC_PERIOD = 8;
+const DEFAULT_DISPLAY_MODE = DisplayModes.VOTES;
 const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
+const DEFAULT_VOTES_OVERLAY = Overlays.VOTES.policy;
 
 const defaultFilters = {
   ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
@@ -61,9 +67,13 @@ const initialOpts = {
   votingData: {},
   computationState: ComputationStates.WAITING,
   maxIter: DEFAULT_ITERATIONS,
-  displayMode: DisplayModes.MPS,
-  colorOverlay: DEFAULT_MP_OVERLAY,
+  displayMode: DEFAULT_DISPLAY_MODE,
+  colorOverlay:
+    DEFAULT_DISPLAY_MODE === DisplayModes.MPS
+      ? DEFAULT_MP_OVERLAY
+      : DEFAULT_VOTES_OVERLAY,
   filters: defaultFilters,
+  magnificationEnabled: true,
   tsne: {
     epsilon: 10,
     perplexity: 20,
@@ -156,6 +166,15 @@ const optsReducer = (state, action) => {
             ? DisplayModes.VOTES
             : DisplayModes.MPS,
         computationState: ComputationStates.RESET,
+        colorOverlay:
+          state.displayMode === DisplayModes.MPS
+            ? DEFAULT_VOTES_OVERLAY
+            : DEFAULT_MP_OVERLAY,
+      };
+    case OptsActions.MAGNIFIER_SWITCHED:
+      return {
+        ...state,
+        magnificationEnabled: !state.magnificationEnabled,
       };
 
     default:
@@ -188,7 +207,7 @@ const applyOtherFilters = (mps, votes, filters) => {
 const computeOverlayData = (displayMode, overlay, mps, votes) =>
   displayMode === DisplayModes.MPS
     ? [overlay.colorFunc(mps), overlay.uniqueValFunc(mps)]
-    : [overlay.colorFunc(mps), overlay.uniqueValFunc(votes)];
+    : [overlay.colorFunc(votes), overlay.uniqueValFunc(votes)];
 
 //MAIN
 export const DataView = (props) => {
@@ -202,6 +221,7 @@ export const DataView = (props) => {
     filters,
     colorOverlay,
     tsne,
+    magnificationEnabled,
   } = optsState;
   const elecPeriod = filters.ELEC_PERIOD.value;
   useEffect(() => {
@@ -215,8 +235,8 @@ export const DataView = (props) => {
   }, [elecPeriod]);
 
   const [windowWidth, windowHeight] = useWindowSize();
-  const mainVisHeight = Math.max(windowHeight * 0.5, 500);
-  const mainVisWidth = Math.max(windowWidth * 0.7, 420);
+  const mainVisHeight = Math.max(windowHeight * 0.55, 500);
+  const mainVisWidth = Math.max(windowWidth * 0.75, 420);
   const [elecPeriodMPs, elecPeriodVotes] = useMemo(
     () => applyElecPeriodFilters(mps, votes, filters.ELEC_PERIOD),
     [filters.ELEC_PERIOD.value]
@@ -232,6 +252,8 @@ export const DataView = (props) => {
     [displayMode, colorOverlay, filteredMPs, filteredVotes]
   );
 
+  console.log(overlayVals);
+
   return (
     <div className={style.dataViewWrap}>
       <header className={style.header}>
@@ -246,11 +268,13 @@ export const DataView = (props) => {
           opts={optsState}
           optsDispatch={optsDispatch}
           data={[votingData, filteredMPs, filteredVotes, overlayColors]}
+          magnificationEnabled={magnificationEnabled}
         />
       </div>
       <div className={style.visControls}>
         <Legend colorOverlay={colorOverlay} uniqueVals={overlayVals} />
         <VisControls
+          magnificationEnabled={magnificationEnabled}
           displayMode={displayMode}
           computationState={computationState}
           optsDispatch={optsDispatch}

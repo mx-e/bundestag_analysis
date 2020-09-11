@@ -1,29 +1,35 @@
 import {
   getGenderColor,
   getPartyColor,
+  getSubjectColor,
   getUniformColorScheme,
 } from "../util/color-util";
 
-export const getUniqueVals = (object, property) =>
-  uniqueVals(Object.values(object).map((val) => val[property]));
+export const getUniqueVals = (object, property) => {
+  return uniqueVals(Object.values(object).map((val) => val[property]));
+};
+
+const getUniqueValsOfArrays = (object, property) => {
+  return union(Object.values(object).map((val) => val[property]));
+};
+
 const uniqueVals = (list) => Array.from(new Set(list));
+
 const union = (listOfLists) => [
   ...listOfLists.reduce((setList, list) => new Set([...setList, ...list])),
 ];
 
 const listFilter = (object, property, listOfValues) => {
-  return union(
-    listOfValues.map((value) =>
-      Object.keys(object).filter((key) => object[key][property].includes(value))
-    )
+  return Object.keys(object).filter((key) =>
+    listOfValues
+      .map((value) => object[key][property].includes(value))
+      .includes(true)
   );
 };
 
 const simpleFilter = (object, property, listOfValues) => {
-  return union(
-    listOfValues.map((value) =>
-      Object.keys(object).filter((key) => object[key][property] === value)
-    )
+  return Object.keys(object).filter((key) =>
+    listOfValues.map((value) => object[key][property] === value).includes(true)
   );
 };
 
@@ -45,8 +51,10 @@ const createFilterFunc = (property, value) => (object) => {
 };
 
 const createUniqueValFunc = (property) => (object) => {
-  if (Array.isArray(Object.values(object)[0][property])) {
-    return []; //explicit because it might be needed in the future
+  if (Object.values(object).length === 0) {
+    return [];
+  } else if (Array.isArray(Object.values(object)[0][property])) {
+    return getUniqueValsOfArrays(object, property);
   } else if (Object.values(object)[0][property]) {
     return getUniqueVals(object, property);
   } else {
@@ -65,6 +73,14 @@ const createColorFuncs = (property) => {
     case "gender":
       colorFunc = getGenderColor;
       coloring = (mp) => colorFunc(mp[property]);
+      break;
+    case "sponsors":
+      colorFunc = getPartyColor;
+      coloring = (vote) => vote[property].map((party) => colorFunc(party));
+      break;
+    case "policy":
+      colorFunc = getSubjectColor;
+      coloring = (vote) => vote[property].map((subject) => colorFunc(subject));
       break;
     default:
       colorFunc = getUniformColorScheme;
@@ -93,5 +109,6 @@ export const ColorOverlay = (title, property, icon) => {
     colorFuncSingle: colorFuncSingle,
     title: title,
     icon: icon,
+    property: property,
   };
 };
