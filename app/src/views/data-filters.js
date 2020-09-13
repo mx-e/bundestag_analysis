@@ -1,16 +1,23 @@
 import {
+  getAgeColor,
   getGenderColor,
   getPartyColor,
+  getPassageColor,
+  getPositionColor,
   getSubjectColor,
   getUniformColorScheme,
 } from "../util/color-util";
 
 export const getUniqueVals = (object, property) => {
-  return uniqueVals(Object.values(object).map((val) => val[property]));
+  const unique = uniqueVals(Object.values(object).map((val) => val[property]));
+  unique.sort((a, b) => a.localeCompare(b));
+  return unique;
 };
 
 const getUniqueValsOfArrays = (object, property) => {
-  return union(Object.values(object).map((val) => val[property]));
+  const unique = union(Object.values(object).map((val) => val[property]));
+  unique.sort((a, b) => a.localeCompare(b));
+  return unique;
 };
 
 const uniqueVals = (list) => Array.from(new Set(list));
@@ -31,6 +38,21 @@ const simpleFilter = (object, property, listOfValues) => {
   return Object.keys(object).filter((key) =>
     listOfValues.map((value) => object[key][property] === value).includes(true)
   );
+};
+
+export const filterObject = (object, filterFunc) => {
+  let out = {};
+  const filteredKeys = Object.keys(object).filter((key) =>
+    filterFunc(object[key])
+  );
+  filteredKeys.forEach((key) => (out[key] = object[key]));
+  return out;
+};
+
+export const mapObject = (object, mapFunc) => {
+  let out = {};
+  Object.keys(object).forEach((key) => (out[key] = mapFunc(object[key])));
+  return out;
 };
 
 const createFilterFunc = (property, value) => (object) => {
@@ -81,6 +103,18 @@ const createColorFuncs = (property) => {
     case "policy":
       colorFunc = getSubjectColor;
       coloring = (vote) => vote[property].map((subject) => colorFunc(subject));
+      break;
+    case "govPos":
+      colorFunc = getPositionColor;
+      coloring = (mp) => mp[property].map((pos) => colorFunc(pos));
+      break;
+    case "passage":
+      colorFunc = getPassageColor;
+      coloring = (vote) => vote[property].map((pas) => colorFunc(pas));
+      break;
+    case "age":
+      colorFunc = getAgeColor;
+      coloring = (mp) => colorFunc(mp[property]);
       break;
     default:
       colorFunc = getUniformColorScheme;

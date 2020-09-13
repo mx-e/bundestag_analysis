@@ -118,7 +118,6 @@ export const VisControls = (props) => {
 export const OverlayControls = (props) => {
   const { displayMode, colorOverlay, optsDispatch } = props;
   const width = Math.min(Object.keys(Overlays[displayMode]).length * 60, 410);
-  console.log(Overlays[displayMode]);
   return (
     <div className={style.overlayControlsWrap}>
       <h5>overlay</h5>

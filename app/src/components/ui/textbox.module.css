@@ -1,0 +1,11 @@
+.textBox{
+    padding: 3px;
+}
+
+.text{
+    text-overflow: ellipsis;
+    overflow: hidden;
+    font-family: "Open Sans", sans-serif;
+    font-weight: 500;
+    user-select: none;
+}

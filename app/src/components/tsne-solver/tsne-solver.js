@@ -94,7 +94,7 @@ export const TSNESolver = (props) => {
     optsDispatch,
     magnificationEnabled,
     data,
-    data: [, , , overlayData],
+    data: [, , , overlayData, mouseOverData],
   } = props;
   const [tsneSolverState, tsneSolverDispatch] = useReducer(
     tsneSolverReducer,
@@ -149,6 +149,7 @@ export const TSNESolver = (props) => {
         }
         mouseOverDisabledMessage="wait for the computation to finish or pause it to interact with the plot"
         magnificationEnabled={magnificationEnabled}
+        mouseOverData={mouseOverData}
       />
     </div>
   );

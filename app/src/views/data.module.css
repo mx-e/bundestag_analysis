@@ -12,17 +12,7 @@
     margin-bottom: 20px;
 }
 
-header{
-    margin-top: 30px;
-    margin-bottom: 50px;
-}
 
-h5{
-    font-family: 'Major Mono Display', monospace ;
-    color: #f8f8f2;
-    font-size: 12px;
-    user-select: none;
-}
 
 .mainVis{
     display: flex;

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef } from "react";
+import ReactDOM from "react-dom";
 import { scaleLinear, select } from "d3";
 import { Fisheye } from "./fisheye";
 import style from "./normalized-scatterplot.module.css";
@@ -19,7 +20,6 @@ const normalize = (X, margin) => {
 };
 
 const onMouseOverWhenDisabled = (ref) => {
-  console.log("mouseover");
   select(ref.current).style("opacity", "1");
   setTimeout(() => select(ref.current).style("opacity", "0"), 5000);
 };
@@ -29,7 +29,7 @@ const DEFAULT_STROKE = 2;
 const FISHEYE_RADIUS = 140;
 const FISHEYE_DISTORTION = 8;
 
-const onMouseMoveWhenEnabled = (event, ref, dotPos, x, y) => {
+const drawDistortion = (event, ref, x, y, dotPos) => {
   const [mouseX, mouseY] = [event.clientX, event.clientY];
   const { left, top } = ref.current.getBoundingClientRect();
   const mousePos = [mouseX - left, mouseY - top];
@@ -60,6 +60,7 @@ export const NormalizedScatterplot = (props) => {
     mouseOverEnabled,
     mouseOverDisabledMessage,
     magnificationEnabled,
+    mouseOverData,
   } = props;
   const normalizedData = normalize(data, 5);
   const x = useMemo(() => scaleLinear().domain([0, 1]).range([0, width]), [
@@ -71,6 +72,8 @@ export const NormalizedScatterplot = (props) => {
   const circlesRef = useRef(null);
   const textRef = useRef(null);
   const svgRef = useRef(null);
+  const tooltipRef = useRef(null);
+  const tooltipContentRef = useRef(null);
 
   useEffect(() => {
     const circles = select(circlesRef.current)
@@ -90,6 +93,33 @@ export const NormalizedScatterplot = (props) => {
       borderColor = (d, i) => overlayData[i];
     }
 
+    let circleHovered = () => null;
+    let circleUnHovered = () => null;
+    if (mouseOverEnabled) {
+      circleHovered = (event, data) => {
+        const [mouseX, mouseY] = [event.pageX, event.pageY];
+        ReactDOM.render(data.tooltip, tooltipContentRef.current);
+        select(tooltipRef.current)
+          .style("top", mouseY + "px")
+          .style("left", mouseX + "px")
+          .style("visibility", "visible")
+          .style(
+            "transform",
+            window.innerWidth - mouseX < 420
+              ? "translate(-100%,0) translate(-15px,15px)"
+              : "translate(15px, 15px)"
+          )
+          .style("opacity", 1);
+      };
+      circleUnHovered = () => {
+        select(tooltipRef.current)
+          .style("top", "0px")
+          .style("left", "0px")
+          .style("visibility", "hidden")
+          .style("opacity", 0);
+      };
+    }
+
     circles
       .enter()
       .append("circle")
@@ -102,13 +132,18 @@ export const NormalizedScatterplot = (props) => {
       .style("stroke-width", DEFAULT_STROKE);
 
     circles
+      .each((d, i) => {
+        if (mouseOverData && mouseOverEnabled) d.tooltip = mouseOverData[i];
+      })
       .attr("cx", (d) => x(d[0]))
       .attr("cy", (d) => y(d[1]))
       .style("fill", fillColor)
-      .style("stroke", borderColor);
+      .style("stroke", borderColor)
+      .on("mouseover", (event, d) => circleHovered(event, d))
+      .on("mouseout", () => circleUnHovered());
 
     circles.exit().remove();
-  }, [normalizedData, overlayData]);
+  }, [normalizedData, overlayData, mouseOverData, mouseOverEnabled]);
 
   return (
     <div
@@ -116,9 +151,8 @@ export const NormalizedScatterplot = (props) => {
         mouseOverEnabled ? null : () => onMouseOverWhenDisabled(textRef)
       }
       onMouseMove={
-        mouseOverEnabled && magnificationEnabled
-          ? (event) =>
-              onMouseMoveWhenEnabled(event, svgRef, normalizedData, x, y)
+        magnificationEnabled && mouseOverEnabled
+          ? (event) => drawDistortion(event, svgRef, x, y, normalizedData)
           : null
       }
     >
@@ -128,6 +162,9 @@ export const NormalizedScatterplot = (props) => {
       <h6 className={style.svgText} ref={textRef}>
         {mouseOverDisabledMessage}
       </h6>
+      <div className={style.tooltip} ref={tooltipRef}>
+        <div style={style.tooltipContent} ref={tooltipContentRef} />
+      </div>
     </div>
   );
 };

@@ -12,9 +12,16 @@ import {
 import { requestElecPeriodData, errorDispatch } from "../middleware/requests";
 import { TSNESolver } from "../components/tsne-solver/tsne-solver";
 import { useWindowSize } from "../util/util";
-import { ColorOverlay, Filter, getUniqueVals } from "./data-filters";
+import {
+  ColorOverlay,
+  Filter,
+  filterObject,
+  getUniqueVals,
+  mapObject,
+} from "./data-filters";
 import style from "./data.module.css";
 import { partyColorMap } from "../util/color-util";
+import { Tooltip } from "../components/ui/tooltip";
 
 export const ComputationStates = Object.freeze({
   RUNNING: "RUNNING",
@@ -43,19 +50,23 @@ export const DisplayModes = Object.freeze({
 export const Overlays = Object.freeze({
   MPS: {
     party: ColorOverlay("party", "party", "heatmap"),
+    govPos: ColorOverlay("position", "govPos", "badge"),
     gender: ColorOverlay("gender", "gender", "people"),
+    age: ColorOverlay("age", "age", "time"),
   },
   VOTES: {
     sponsors: ColorOverlay("sponsors", "sponsors", "heatmap"),
     policy: ColorOverlay("subject", "policy", "box"),
+    passage: ColorOverlay("passage", "passage", "tick-circle"),
   },
 });
 
 const DEFAULT_ITERATIONS = 2000;
-const DEFAULT_ELEC_PERIOD = 8;
+const DEFAULT_ELEC_PERIOD = 12;
+const DEFAULT_PERPLEXITY = 15;
 const DEFAULT_DISPLAY_MODE = DisplayModes.VOTES;
 const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
-const DEFAULT_VOTES_OVERLAY = Overlays.VOTES.policy;
+const DEFAULT_VOTES_OVERLAY = Overlays.VOTES.passage;
 
 const defaultFilters = {
   ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
@@ -76,7 +87,7 @@ const initialOpts = {
   magnificationEnabled: true,
   tsne: {
     epsilon: 10,
-    perplexity: 20,
+    perplexity: DEFAULT_PERPLEXITY,
     dim: 2,
   },
 };
@@ -182,10 +193,32 @@ const optsReducer = (state, action) => {
   }
 };
 
-const applyElecPeriodFilters = (mps, votes, filter) => [
-  filter.filterFunc(mps),
-  filter.filterFunc(votes),
-];
+const collapseEntityToElecPeriod = (entity, elecPeriod) => {
+  let out = {};
+  Object.keys(entity).forEach((key) => {
+    if (Array.isArray(entity[key]) || typeof entity[key] !== "object") {
+      out[key] = entity[key];
+    } else {
+      out[key] = entity[key][elecPeriod];
+    }
+  });
+  return out;
+};
+
+const applyElecPeriodFilters = (mps, votes, filter) => {
+  return [
+    filter.filterFunc(
+      mapObject(mps, (entity) =>
+        collapseEntityToElecPeriod(entity, filter.value)
+      )
+    ),
+    filter.filterFunc(
+      mapObject(votes, (entity) =>
+        collapseEntityToElecPeriod(entity, filter.value)
+      )
+    ),
+  ];
+};
 
 const applyOtherFilters = (mps, votes, filters) => {
   let filteredMPs = { ...mps };
@@ -208,6 +241,42 @@ const computeOverlayData = (displayMode, overlay, mps, votes) =>
   displayMode === DisplayModes.MPS
     ? [overlay.colorFunc(mps), overlay.uniqueValFunc(mps)]
     : [overlay.colorFunc(votes), overlay.uniqueValFunc(votes)];
+
+const getTooltipContent = (entity, displayMode) =>
+  Object.values(Overlays[displayMode]).map((overlay) => {
+    return Array.isArray(entity[overlay.property])
+      ? {
+          texts: entity[overlay.property],
+          colors: entity[overlay.property].map(overlay.colorFuncSingle),
+        }
+      : {
+          texts: [entity[overlay.property]],
+          colors: [overlay.colorFuncSingle(entity[overlay.property])],
+        };
+  });
+
+const computeTooltips = (displayMode, mps, votes) => {
+  const callToAction = null; //"double click for more details";
+
+  if (displayMode === DisplayModes.MPS) {
+    console.log(mps);
+    return Object.values(mps).map((mp) => (
+      <Tooltip
+        content={getTooltipContent(mp, displayMode)}
+        callToAction={callToAction}
+        title={mp.firstName + " " + mp.lastName}
+      />
+    ));
+  } else {
+    return Object.values(votes).map((vote) => (
+      <Tooltip
+        content={getTooltipContent(vote, displayMode)}
+        callToAction={callToAction}
+        title={vote.title}
+      />
+    ));
+  }
+};
 
 //MAIN
 export const DataView = (props) => {
@@ -252,7 +321,10 @@ export const DataView = (props) => {
     [displayMode, colorOverlay, filteredMPs, filteredVotes]
   );
 
-  console.log(overlayVals);
+  const mouseOverTooltips = useMemo(
+    () => computeTooltips(displayMode, filteredMPs, filteredVotes),
+    [displayMode, filteredMPs, filteredVotes]
+  );
 
   return (
     <div className={style.dataViewWrap}>
@@ -267,7 +339,13 @@ export const DataView = (props) => {
           elecPeriod={elecPeriod}
           opts={optsState}
           optsDispatch={optsDispatch}
-          data={[votingData, filteredMPs, filteredVotes, overlayColors]}
+          data={[
+            votingData,
+            filteredMPs,
+            filteredVotes,
+            overlayColors,
+            mouseOverTooltips,
+          ]}
           magnificationEnabled={magnificationEnabled}
         />
       </div>

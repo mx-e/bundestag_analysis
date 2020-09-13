@@ -16,6 +16,27 @@ code {
     monospace;
 }
 
+header{
+  margin-top: 30px;
+  margin-bottom: 50px;
+}
+
+h5{
+  font-family: 'Major Mono Display', monospace ;
+  color: #f8f8f2;
+  font-size: 12px;
+  user-select: none;
+}
+
+h6 {
+  font-size: 10px;
+  color: #f8f8f2;
+  font-family: 'Major Mono Display', monospace;
+  margin-top: 16px;
+  margin-bottom: 16px;
+  user-select: none;
+}
+
 .bp3-slider-progress.bp3-intent-primary{
   background-color: #f92672;
   opacity: 80%;
@@ -41,3 +62,4 @@ code {
   outline: none;
   outline-offset: 0;
 }
+
