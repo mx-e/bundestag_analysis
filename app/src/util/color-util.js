@@ -22,19 +22,30 @@ export const partyColorMap = {
   "Left/PDS": "#BE3075",
   Committee: "#f8f8f2",
   Bundesrat: "#75715e",
+  KPD: "#8B0000",
+  BP: "#98F5FF",
+  DP: "#63B8FF",
+  Z: "#0000CD",
+  WAV: "#FFEC8B",
+  SSW: "#003c8f",
+  "NationalRight/DRP": "#8b4726",
+  unaffiliated: neutralColor,
+  "GB/BHE": "#C3C318",
+  CVP: textColorLight,
 };
 
 export const subjectColorMap = {
-  "government operations": "#f8f8f2",
-  "social welfare": "#a6e22e",
-  healthcare: accent3,
+  "international affairs, foreign trade and foreign aid": selectedColorLight,
+  "environment, agriculture, energy and water": activeColor,
+  "macroeconomics, budget, domestic commerce and finance": accent2,
+  "civil rights, minorty and family issues and crime": accent1,
+  "social welfare and housing": accent3,
+  "government operations and constitutional amendments": textColorLight,
   defense: "#75715e",
-  "macroeconomics (including bugdet)": accent1,
-  "international affairs and foreign aid": selectedColorLight,
-  "labor, employment, and immigration": "#f92672",
-  energy: accent2,
-  education: "#ae81ff",
-  "other, miscellaneous, and human interest": "#cfcfc2",
+  "social services (education, healthcare, transportation)": "#ae81ff",
+  "labor, employment and immigration": errorColor,
+  reunification: selectedColor,
+  other: neutralColor,
 };
 
 export const positionColorMap = {
@@ -88,12 +99,12 @@ const shadeColor = (color, newBrightness) => {
   );
 };
 export const ageColorMap = {
-  "29 or under": shadeColor(activeColor, 1.2),
-  "30-39": shadeColor(activeColor, 1),
-  "40-49": shadeColor(activeColor, 0.8),
-  "50-59": shadeColor(activeColor, 0.6),
-  "60-69": shadeColor(activeColor, 0.4),
-  "70-79": shadeColor(activeColor, 0.2),
+  "29 or under": shadeColor(activeColor, 1.6),
+  "30-39": shadeColor(activeColor, 1.1),
+  "40-49": shadeColor(activeColor, 0.6),
+  "50-59": shadeColor(activeColor, 0.3),
+  "60-69": shadeColor(activeColor, 0.15),
+  "70-79": shadeColor(activeColor, 0.05),
   "80 or older": shadeColor(activeColor, 0),
 };
 
@@ -102,7 +113,7 @@ export const isDark = (hex) => {
   return (rgb.r + rgb.b + rgb.g) / (3 * 256) < 0.45;
 };
 
-const genderColorMap = {
+export const genderColorMap = {
   male: selectedColor,
   female: errorColor,
 };

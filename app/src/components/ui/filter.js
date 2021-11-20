@@ -31,7 +31,7 @@ export const Filter = (props) => {
       </div>
       <div
         className={style.filterSwitches}
-        style={{ flexDirection: isMirrored ? "row" : "row-reverse" }}
+        style={{ flexDirection: isMirrored ? "row-reverse" : "row" }}
       >
         {uniqueVals.map((val) => (
           <Rectangle

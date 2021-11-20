@@ -1,25 +1,33 @@
 
 .filterWrap{
     display: flex;
-    width: 410px;
+    width: 460px;
     margin-top: 30px;
     align-content: start;
 }
 
 .filterTitle{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
     color: white;
     font-family: "Open Sans", sans-serif;
     font-size: 12px;
+    padding-bottom: 15px;
+    width: 55px;
 }
 
 .filterSwitches{
     display: flex;
+    flex-wrap: wrap;
+    justify-content: start;
 }
 
 .filterSwitches>div {
-    margin-left: 4px;
-    margin-right: 4px;
-    margin-top: 4px;
+    margin-left: 11px;
+    margin-right: 11px;
+    margin-top: 5px;
+    margin-bottom: 30px;
 }
 
 

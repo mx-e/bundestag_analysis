@@ -3,7 +3,7 @@ import PropTypes from "prop-types";
 import { Icon } from "@blueprintjs/core";
 import style from "./rectangle.module.css";
 
-const MAX_TEXT_LEN = 13;
+const MAX_TEXT_LEN = 11;
 
 const shortenText = (text, chars) =>
   text.length > chars - 2 ? text.substring(0, chars - 3) + "..." : text; // # ... = 3 chars => -2

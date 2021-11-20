@@ -20,7 +20,14 @@ import {
   mapObject,
 } from "./data-filters";
 import style from "./data.module.css";
-import { partyColorMap } from "../util/color-util";
+import {
+  ageColorMap,
+  genderColorMap,
+  partyColorMap,
+  passageColorMap,
+  positionColorMap,
+  subjectColorMap,
+} from "../util/color-util";
 import { Tooltip } from "../components/ui/tooltip";
 
 export const ComputationStates = Object.freeze({
@@ -41,6 +48,7 @@ export const OptsActions = Object.freeze({
   ELEC_PERIOD_CHANGED: "ELEC_PERIOD_CHANGED",
   PERPLEXITY_CHANGED: "PERPLEXITY_CHANGED",
   MP_FILTER_CHANGED: "MP_FILTER_CHANGED",
+  VOTES_FILTER_CHANGED: "VOTES_FILTER_CHANGED",
   MAGNIFIER_SWITCHED: "MAGNIFIER_SWITCHED",
 });
 export const DisplayModes = Object.freeze({
@@ -62,16 +70,25 @@ export const Overlays = Object.freeze({
 });
 
 const DEFAULT_ITERATIONS = 2000;
-const DEFAULT_ELEC_PERIOD = 12;
+const DEFAULT_ELEC_PERIOD = 2;
 const DEFAULT_PERPLEXITY = 15;
-const DEFAULT_DISPLAY_MODE = DisplayModes.VOTES;
+const DEFAULT_DISPLAY_MODE = DisplayModes.MPS;
 const DEFAULT_MP_OVERLAY = Overlays.MPS.party;
-const DEFAULT_VOTES_OVERLAY = Overlays.VOTES.passage;
+const DEFAULT_VOTES_OVERLAY = Overlays.VOTES.sponsors;
 
 const defaultFilters = {
   ELEC_PERIOD: Filter("bundestag of:", "elecPeriod", DEFAULT_ELEC_PERIOD),
-  MPS: [Filter("party", "party", Object.keys(partyColorMap))],
-  VOTES: [],
+  MPS: [
+    Filter("party", "party", Object.keys(partyColorMap)),
+    Filter("position", "govPos", Object.keys(positionColorMap)),
+    Filter("gender", "gender", Object.keys(genderColorMap)),
+    Filter("age", "age", Object.keys(ageColorMap)),
+  ],
+  VOTES: [
+    Filter("sponsors", "sponsors", Object.keys(partyColorMap)),
+    Filter("subject", "policy", Object.keys(subjectColorMap)),
+    Filter("passage", "passage", Object.keys(passageColorMap)),
+  ],
 };
 
 const initialOpts = {
@@ -154,18 +171,36 @@ const optsReducer = (state, action) => {
         votingData: newData,
       };
     case OptsActions.MP_FILTER_CHANGED:
-      const [filter, changedValue] = value;
-      const newValue = filter.value.includes(changedValue)
-        ? filter.value.filter((val) => val !== changedValue)
-        : filter.value.concat([changedValue]);
+      const [mpFilter, mpChangedValue] = value;
+      const mpNewValue = mpFilter.value.includes(mpChangedValue)
+        ? mpFilter.value.filter((val) => val !== mpChangedValue)
+        : mpFilter.value.concat([mpChangedValue]);
+      const newMpFilters = [...state.filters.MPS];
+      newMpFilters[
+        newMpFilters.findIndex((fil) => fil.title === mpFilter.title)
+      ] = Filter(mpFilter.title, mpFilter.property, mpNewValue);
       return {
         ...state,
         filters: {
           ...state.filters,
-          MPS: [
-            ...state.filters.MPS.filter((fil) => fil.title !== filter.title),
-            Filter(filter.title, filter.property, newValue),
-          ],
+          MPS: newMpFilters,
+        },
+        computationState: ComputationStates.RESET,
+      };
+    case OptsActions.VOTES_FILTER_CHANGED:
+      const [votesFilter, votesChangedValue] = value;
+      const votesNewValue = votesFilter.value.includes(votesChangedValue)
+        ? votesFilter.value.filter((val) => val !== votesChangedValue)
+        : votesFilter.value.concat([votesChangedValue]);
+      const newVoteFilters = [...state.filters.VOTES];
+      newVoteFilters[
+        newVoteFilters.findIndex((fil) => fil.title === votesFilter.title)
+      ] = Filter(votesFilter.title, votesFilter.property, votesNewValue);
+      return {
+        ...state,
+        filters: {
+          ...state.filters,
+          VOTES: newVoteFilters,
         },
         computationState: ComputationStates.RESET,
       };
@@ -326,6 +361,8 @@ export const DataView = (props) => {
     [displayMode, filteredMPs, filteredVotes]
   );
 
+  console.log(filteredMPs);
+
   return (
     <div className={style.dataViewWrap}>
       <header className={style.header}>
@@ -378,14 +415,18 @@ export const DataView = (props) => {
           uniqueFilterVals={uniqueFilterVals.MPS}
           filters={filters.MPS}
           groupName={DisplayModes.MPS}
-          optsDispatch={optsDispatch}
+          onFilterChange={(filter, val) =>
+            optsDispatch([OptsActions.MP_FILTER_CHANGED, [filter, val]])
+          }
           isMirrored={true}
         />
         <FiltersGroup
           uniqueFilterVals={uniqueFilterVals.VOTES}
           filters={filters.VOTES}
           groupName={DisplayModes.VOTES}
-          optsDispatch={optsDispatch}
+          onFilterChange={(filter, val) =>
+            optsDispatch([OptsActions.VOTES_FILTER_CHANGED, [filter, val]])
+          }
           isMirrored={false}
         />
       </div>

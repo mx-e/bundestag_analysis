@@ -47,6 +47,6 @@
     margin-top: 15px;
     margin-bottom: 30px;
     display: flex;
-    justify-content: space-evenly;
+    justify-content: center;
     flex-wrap: wrap;
 }

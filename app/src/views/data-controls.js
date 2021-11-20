@@ -206,7 +206,7 @@ export const FiltersGroup = (props) => {
     uniqueFilterVals,
     groupName,
     filters,
-    optsDispatch,
+    onFilterChange,
     isMirrored,
   } = props;
   return (
@@ -218,9 +218,7 @@ export const FiltersGroup = (props) => {
           filter={filter}
           uniqueVals={uniqueFilterVals[filter.title]}
           inactiveColor={backgroundColor}
-          onFilterChange={(val) =>
-            optsDispatch([OptsActions.MP_FILTER_CHANGED, [filter, val]])
-          }
+          onFilterChange={(val) => onFilterChange(filter, val)}
           isMirrored={isMirrored}
         />
       ))}
